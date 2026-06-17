@@ -1,0 +1,630 @@
+<Window x:Class="CplCassaEventi.Views.BackOffice.BackOfficeWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:conv="clr-namespace:CplCassaEventi.Converters"
+        Title="BackOffice — CPL Cassa" Height="760" Width="1020"
+        WindowStartupLocation="CenterOwner">
+    <Window.Resources>
+        <conv:BoolToVisibilityConverter x:Key="BoolToVis"/>
+        <conv:InverseBoolToVisibilityConverter x:Key="InvBoolToVis"/>
+        <conv:NullToCollapsedConverter x:Key="NullToCollapsed"/>
+        <conv:EuroConverter x:Key="Euro"/>
+    </Window.Resources>
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="50"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="34"/>
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <Border Grid.Row="0" Background="{StaticResource BgPrimaryBrush}"
+                BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,0,0,0.5">
+            <Grid Margin="16,0">
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <TextBlock Text="BackOffice" FontSize="17" FontWeight="SemiBold"
+                               Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center"/>
+                    <Border Background="{StaticResource AccentBlueBgBrush}" CornerRadius="12" Padding="8,3" Margin="10,0,0,0">
+                        <TextBlock Text="{Binding ActiveEventName}" FontSize="12"
+                                   Foreground="{StaticResource AccentBlueBrush}"/>
+                    </Border>
+                </StackPanel>
+                <Button Content="Chiudi" HorizontalAlignment="Right"
+                        Style="{StaticResource DeptTabButton}" Padding="12,6"
+                        Click="CloseBtn_Click"/>
+            </Grid>
+        </Border>
+
+        <TabControl Grid.Row="1" Margin="10" Background="Transparent"
+                    BorderBrush="{StaticResource BorderBrush}">
+
+            <!-- ═══ TAB: REPARTI ═══════════════════════════════════════════ -->
+            <TabItem Header="Reparti" DataContext="{Binding Departments}">
+                <Grid Margin="10">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="340"/>
+                    </Grid.ColumnDefinitions>
+
+                    <!-- List -->
+                    <Border Grid.Column="0" Style="{StaticResource Card}" Padding="0" Margin="0,0,10,0">
+                        <Grid>
+                            <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
+                            <Border Padding="12,9" BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,0,0,0.5">
+                                <Grid>
+                                    <TextBlock Text="Reparti" FontSize="14" FontWeight="SemiBold"
+                                               Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center"/>
+                                    <Button Content="+ Nuovo" Style="{StaticResource PrimaryButton}"
+                                            Padding="10,4" HorizontalAlignment="Right" Command="{Binding NewCommand}"/>
+                                </Grid>
+                            </Border>
+                            <DataGrid Grid.Row="1" ItemsSource="{Binding Departments}" AutoGenerateColumns="False"
+                                      IsReadOnly="True" SelectionMode="Single" Background="Transparent"
+                                      HeadersVisibility="Column" Margin="0"
+                                      SelectedItem="{Binding Selected}">
+                                <DataGrid.Columns>
+                                    <DataGridTextColumn Header="Nome" Binding="{Binding Name}" Width="*"/>
+                                    <DataGridCheckBoxColumn Header="Attivo" Binding="{Binding IsActive}" Width="60"/>
+                                    <DataGridCheckBoxColumn Header="Scontrino sep." Binding="{Binding PrintSeparateReceipt}" Width="100"/>
+                                    <DataGridTextColumn Header="Ord." Binding="{Binding SortOrder}" Width="45"/>
+                                    <DataGridTemplateColumn Header="Azioni" Width="90">
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <StackPanel Orientation="Horizontal">
+                                                    <Button Content="✎" Style="{StaticResource PrimaryButton}" Padding="6,2" FontSize="11"
+                                                            Command="{Binding DataContext.EditCommand, RelativeSource={RelativeSource AncestorType=TabItem}}"
+                                                            CommandParameter="{Binding}"/>
+                                                    <Button Content="✕" Style="{StaticResource DangerButton}" Padding="6,2" FontSize="11"
+                                                            Command="{Binding DataContext.DeleteCommand, RelativeSource={RelativeSource AncestorType=TabItem}}"
+                                                            CommandParameter="{Binding}"/>
+                                                </StackPanel>
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
+                                </DataGrid.Columns>
+                            </DataGrid>
+                        </Grid>
+                    </Border>
+
+                    <!-- Edit form -->
+                    <Border Grid.Column="1" Style="{StaticResource Card}"
+                            Visibility="{Binding IsEditing, Converter={StaticResource BoolToVis}}">
+                        <StackPanel>
+                            <TextBlock Text="Modifica reparto" FontSize="14" FontWeight="SemiBold"
+                                       Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,14"/>
+                            <TextBlock Text="Nome *" FontSize="12" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,4"/>
+                            <TextBox Text="{Binding EditName, UpdateSourceTrigger=PropertyChanged}"
+                                     Height="34" Padding="8,0" Margin="0,0,0,10" VerticalContentAlignment="Center"/>
+                            <TextBlock Text="Colore (hex)" FontSize="12" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,4"/>
+                            <TextBox Text="{Binding EditColor, UpdateSourceTrigger=PropertyChanged}"
+                                     Height="34" Padding="8,0" Margin="0,0,0,10" VerticalContentAlignment="Center"/>
+                            <TextBlock Text="Ordine" FontSize="12" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,4"/>
+                            <TextBox Text="{Binding EditSortOrder, UpdateSourceTrigger=PropertyChanged}"
+                                     Height="34" Padding="8,0" Margin="0,0,0,10" VerticalContentAlignment="Center"/>
+                            <CheckBox Content="Reparto attivo" IsChecked="{Binding EditIsActive}"
+                                      Margin="0,0,0,8" Foreground="{StaticResource TextPrimaryBrush}"/>
+                            <CheckBox Content="Stampa scontrino separato" IsChecked="{Binding EditPrintSeparate}"
+                                      Margin="0,0,0,16" Foreground="{StaticResource TextPrimaryBrush}"/>
+                            <TextBlock Text="{Binding StatusMessage}" FontSize="12"
+                                       Foreground="{StaticResource AccentRedBrush}" Margin="0,0,0,8"
+                                       Visibility="{Binding StatusMessage, Converter={StaticResource NullToCollapsed}}"/>
+                            <Grid>
+                                <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="8"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                                <Button Grid.Column="0" Content="Salva" Style="{StaticResource SuccessButton}" Height="38" Command="{Binding SaveCommand}"/>
+                                <Button Grid.Column="2" Content="Annulla" Style="{StaticResource DeptTabButton}" Height="38" Width="80" Command="{Binding CancelCommand}"/>
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+                </Grid>
+            </TabItem>
+
+            <!-- ═══ TAB: ARTICOLI ══════════════════════════════════════════ -->
+            <TabItem Header="Articoli" DataContext="{Binding Products}">
+                <Grid Margin="10">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="360"/>
+                    </Grid.ColumnDefinitions>
+
+                    <Border Grid.Column="0" Style="{StaticResource Card}" Padding="0" Margin="0,0,10,0">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
+                            <Border Padding="12,9" BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,0,0,0.5">
+                                <Grid>
+                                    <TextBlock Text="Listino articoli" FontSize="14" FontWeight="SemiBold"
+                                               Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center"/>
+                                    <Button Content="+ Nuovo" Style="{StaticResource PrimaryButton}"
+                                            Padding="10,4" HorizontalAlignment="Right" Command="{Binding NewCommand}"/>
+                                </Grid>
+                            </Border>
+                            <!-- Filters -->
+                            <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="10,8">
+                                <TextBox Width="180" Height="30" Padding="6,0" VerticalContentAlignment="Center" Margin="0,0,8,0"
+                                         Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"/>
+                                <ComboBox Width="130" Height="30"
+                                          ItemsSource="{Binding Departments}"
+                                          SelectedItem="{Binding FilterDept}"
+                                          DisplayMemberPath="Name"/>
+                            </StackPanel>
+                            <DataGrid Grid.Row="2" ItemsSource="{Binding FilteredProducts}" AutoGenerateColumns="False"
+                                      IsReadOnly="True" Background="Transparent" HeadersVisibility="Column">
+                                <DataGrid.Columns>
+                                    <DataGridTextColumn Header="Articolo" Binding="{Binding Name}" Width="*"/>
+                                    <DataGridTextColumn Header="Reparto" Width="100"
+                                                        Binding="{Binding DepartmentId}"/>
+                                    <DataGridTextColumn Header="Prezzo" Width="70"
+                                                        Binding="{Binding Price, StringFormat='€ {0:F2}'}"/>
+                                    <DataGridCheckBoxColumn Header="Attivo" Binding="{Binding IsActive}" Width="55"/>
+                                    <DataGridCheckBoxColumn Header="Stock" Binding="{Binding TrackStock}" Width="55"/>
+                                    <DataGridTextColumn Header="Qty" Binding="{Binding StockQty}" Width="45"/>
+                                    <DataGridTemplateColumn Header="Azioni" Width="90">
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <StackPanel Orientation="Horizontal">
+                                                    <Button Content="✎" Style="{StaticResource PrimaryButton}" Padding="6,2" FontSize="11" Margin="0,0,4,0"
+                                                            Command="{Binding DataContext.EditCommand, RelativeSource={RelativeSource AncestorType=TabItem}}"
+                                                            CommandParameter="{Binding}"/>
+                                                    <Button Content="✕" Style="{StaticResource DangerButton}" Padding="6,2" FontSize="11"
+                                                            Command="{Binding DataContext.DeleteCommand, RelativeSource={RelativeSource AncestorType=TabItem}}"
+                                                            CommandParameter="{Binding}"/>
+                                                </StackPanel>
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
+                                </DataGrid.Columns>
+                            </DataGrid>
+                        </Grid>
+                    </Border>
+
+                    <!-- Edit form -->
+                    <Border Grid.Column="1" Style="{StaticResource Card}"
+                            Visibility="{Binding IsEditing, Converter={StaticResource BoolToVis}}">
+                        <StackPanel>
+                            <TextBlock Text="Modifica articolo" FontSize="14" FontWeight="SemiBold"
+                                       Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,14"/>
+                            <TextBlock Text="Nome *" FontSize="12" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,4"/>
+                            <TextBox Text="{Binding EditName, UpdateSourceTrigger=PropertyChanged}"
+                                     Height="34" Padding="8,0" Margin="0,0,0,10" VerticalContentAlignment="Center"/>
+                            <TextBlock Text="Prezzo €" FontSize="12" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,4"/>
+                            <TextBox Text="{Binding EditPrice, UpdateSourceTrigger=PropertyChanged}"
+                                     Height="34" Padding="8,0" Margin="0,0,0,10" VerticalContentAlignment="Center"/>
+                            <TextBlock Text="Reparto *" FontSize="12" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,4"/>
+                            <ComboBox ItemsSource="{Binding Departments}" Height="34"
+                                      SelectedValuePath="Id" SelectedValue="{Binding EditDeptId}"
+                                      DisplayMemberPath="Name" Margin="0,0,0,10"/>
+                            <TextBlock Text="Ordine" FontSize="12" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,4"/>
+                            <TextBox Text="{Binding EditSortOrder, UpdateSourceTrigger=PropertyChanged}"
+                                     Height="34" Padding="8,0" Margin="0,0,0,10" VerticalContentAlignment="Center"/>
+                            <CheckBox Content="Articolo attivo" IsChecked="{Binding EditIsActive}"
+                                      Margin="0,0,0,8" Foreground="{StaticResource TextPrimaryBrush}"/>
+                            <CheckBox Content="Gestisci disponibilità (stock)" IsChecked="{Binding EditTrackStock}"
+                                      Margin="0,0,0,8" Foreground="{StaticResource TextPrimaryBrush}"/>
+                            <StackPanel Visibility="{Binding EditTrackStock, Converter={StaticResource BoolToVis}}">
+                                <TextBlock Text="Quantità disponibile" FontSize="12" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,4"/>
+                                <TextBox Text="{Binding EditStockQty, UpdateSourceTrigger=PropertyChanged}"
+                                         Height="34" Padding="8,0" Margin="0,0,0,10" VerticalContentAlignment="Center"/>
+                            </StackPanel>
+                            <TextBlock Text="{Binding StatusMessage}" FontSize="12"
+                                       Foreground="{StaticResource AccentRedBrush}" Margin="0,0,0,8"
+                                       Visibility="{Binding StatusMessage, Converter={StaticResource NullToCollapsed}}"/>
+                            <Grid>
+                                <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="8"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                                <Button Grid.Column="0" Content="Salva" Style="{StaticResource SuccessButton}" Height="38" Command="{Binding SaveCommand}"/>
+                                <Button Grid.Column="2" Content="Annulla" Style="{StaticResource DeptTabButton}" Height="38" Width="80" Command="{Binding CancelCommand}"/>
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+                </Grid>
+            </TabItem>
+
+            <!-- ═══ TAB: OPERATORI ════════════════════════════════════════ -->
+            <TabItem Header="Operatori" DataContext="{Binding Operators}">
+                <Grid Margin="10">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="360"/>
+                    </Grid.ColumnDefinitions>
+
+                    <Border Grid.Column="0" Style="{StaticResource Card}" Padding="0" Margin="0,0,10,0">
+                        <Grid>
+                            <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
+                            <Border Padding="12,9" BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,0,0,0.5">
+                                <Grid>
+                                    <TextBlock Text="Gestione operatori" FontSize="14" FontWeight="SemiBold"
+                                               Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center"/>
+                                    <Button Content="+ Nuovo" Style="{StaticResource PrimaryButton}"
+                                            Padding="10,4" HorizontalAlignment="Right" Command="{Binding NewOperatorCommand}"/>
+                                </Grid>
+                            </Border>
+                            <DataGrid Grid.Row="1" ItemsSource="{Binding Operators}" AutoGenerateColumns="False"
+                                      IsReadOnly="True" Background="Transparent" HeadersVisibility="Column">
+                                <DataGrid.Columns>
+                                    <DataGridTextColumn Header="Username" Binding="{Binding Username}" Width="120"/>
+                                    <DataGridTextColumn Header="Nome" Binding="{Binding DisplayName}" Width="*"/>
+                                    <DataGridTextColumn Header="Ruolo" Binding="{Binding Role}" Width="80"/>
+                                    <DataGridCheckBoxColumn Header="Attivo" Binding="{Binding IsActive}" Width="55"/>
+                                    <DataGridCheckBoxColumn Header="Cambia pwd" Binding="{Binding MustChangePassword}" Width="90"/>
+                                    <DataGridTemplateColumn Header="Azioni" Width="130">
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <StackPanel Orientation="Horizontal">
+                                                    <Button Content="✎" Style="{StaticResource PrimaryButton}" Padding="6,2" FontSize="11"
+                                                            Command="{Binding DataContext.EditOperatorCommand, RelativeSource={RelativeSource AncestorType=TabItem}}"
+                                                            CommandParameter="{Binding}"/>
+                                                    <Button Content="🔑" Style="{StaticResource WarnButton}" Padding="6,2" FontSize="11"
+                                                            Command="{Binding DataContext.ResetPasswordCommand, RelativeSource={RelativeSource AncestorType=TabItem}}"
+                                                            CommandParameter="{Binding}"/>
+                                                    <Button Content="✕" Style="{StaticResource DangerButton}" Padding="6,2" FontSize="11"
+                                                            Command="{Binding DataContext.DeleteOperatorCommand, RelativeSource={RelativeSource AncestorType=TabItem}}"
+                                                            CommandParameter="{Binding}"/>
+                                                </StackPanel>
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
+                                </DataGrid.Columns>
+                            </DataGrid>
+                        </Grid>
+                    </Border>
+
+                    <!-- Edit form -->
+                    <Border Grid.Column="1" Style="{StaticResource Card}"
+                            Visibility="{Binding IsEditing, Converter={StaticResource BoolToVis}}">
+                        <StackPanel>
+                            <TextBlock FontSize="14" FontWeight="SemiBold" Margin="0,0,0,14"
+                                       Foreground="{StaticResource TextPrimaryBrush}"
+                                       Text="{Binding IsNewOperator, Converter={StaticResource BoolToNewEditLabel}}"/>
+                            <TextBlock Text="Username *" FontSize="12" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,4"/>
+                            <TextBox Text="{Binding EditUsername, UpdateSourceTrigger=PropertyChanged}"
+                                     Height="34" Padding="8,0" Margin="0,0,0,10" VerticalContentAlignment="Center"/>
+                            <TextBlock Text="Nome visualizzato *" FontSize="12" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,4"/>
+                            <TextBox Text="{Binding EditDisplayName, UpdateSourceTrigger=PropertyChanged}"
+                                     Height="34" Padding="8,0" Margin="0,0,0,10" VerticalContentAlignment="Center"/>
+                            <TextBlock Text="Ruolo" FontSize="12" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,4"/>
+                            <ComboBox ItemsSource="{Binding AvailableRoles}" Height="34"
+                                      SelectedItem="{Binding EditRole}" Margin="0,0,0,10"/>
+                            <CheckBox Content="Operatore attivo" IsChecked="{Binding EditIsActive}"
+                                      Margin="0,0,0,12" Foreground="{StaticResource TextPrimaryBrush}"/>
+                            <TextBlock FontSize="12" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,4"
+                                       Text="{Binding IsNewOperator, Converter={StaticResource BoolToPwdLabel}}"/>
+                            <PasswordBox x:Name="OpPwdBox" Height="34" Padding="8,0" Margin="0,0,0,10"
+                                         PasswordChanged="OpPwdBox_PasswordChanged"/>
+                            <TextBlock Text="Conferma password" FontSize="12"
+                                       Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,4"/>
+                            <PasswordBox x:Name="OpConfirmPwdBox" Height="34" Padding="8,0" Margin="0,0,0,8"
+                                         PasswordChanged="OpConfirmPwdBox_PasswordChanged"/>
+                            <TextBlock Text="{Binding StatusMessage}" FontSize="12"
+                                       Foreground="{StaticResource AccentRedBrush}" Margin="0,0,0,8"
+                                       Visibility="{Binding StatusMessage, Converter={StaticResource NullToCollapsed}}"/>
+                            <Grid>
+                                <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="8"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                                <Button Grid.Column="0" Content="Salva" Style="{StaticResource SuccessButton}" Height="38" Command="{Binding SaveOperatorCommand}"/>
+                                <Button Grid.Column="2" Content="Annulla" Style="{StaticResource DeptTabButton}" Height="38" Width="80" Command="{Binding CancelEditCommand}"/>
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+                </Grid>
+            </TabItem>
+
+            <!-- ═══ TAB: REPORTISTICA ═════════════════════════════════════ -->
+            <TabItem Header="Reportistica" DataContext="{Binding Report}">
+                <Grid Margin="10">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                    <!-- Filter bar -->
+                    <Border Style="{StaticResource Card}" Margin="0,0,0,10">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="Dal" VerticalAlignment="Center" FontSize="12" Margin="0,0,8,0"
+                                       Foreground="{StaticResource TextSecondaryBrush}"/>
+                            <DatePicker SelectedDate="{Binding From}" Width="130" Margin="0,0,12,0"/>
+                            <TextBlock Text="Al" VerticalAlignment="Center" FontSize="12" Margin="0,0,8,0"
+                                       Foreground="{StaticResource TextSecondaryBrush}"/>
+                            <DatePicker SelectedDate="{Binding To}" Width="130" Margin="0,0,12,0"/>
+                            <Button Content="Carica" Style="{StaticResource PrimaryButton}" Padding="12,6" Margin="0,0,12,0"
+                                    Command="{Binding LoadCommand}"/>
+                            <Button Content="Oggi" Style="{StaticResource DeptTabButton}" Padding="8,6" Margin="0,0,12,0"
+                                    Command="{Binding SetTodayCommand}"/>
+                            <Button Content="Tutto" Style="{StaticResource DeptTabButton}" Padding="8,6" Margin="0,0,12,0"
+                                    Command="{Binding SetAllTimeCommand}"/>
+                            <Button Content="Esporta CSV" Style="{StaticResource SuccessButton}" Padding="12,6"
+                                    Command="{Binding ExportCsvCommand}"/>
+                        </StackPanel>
+                    </Border>
+
+                    <Grid Grid.Row="1">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="240"/>
+                        </Grid.ColumnDefinitions>
+
+                        <!-- Product report -->
+                        <Border Grid.Column="0" Style="{StaticResource Card}" Padding="0" Margin="0,0,10,0">
+                            <Grid>
+                                <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
+                                <Border Padding="12,9" BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,0,0,0.5">
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="Venduto per articolo" FontSize="13" FontWeight="SemiBold"
+                                                   Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center" Margin="0,0,16,0"/>
+                                        <Border Background="{StaticResource AccentGreenBgBrush}" CornerRadius="8" Padding="8,3">
+                                            <TextBlock FontSize="12" Foreground="{StaticResource AccentGreenBrush}">
+                                                <TextBlock.Text>
+                                                    <MultiBinding StringFormat="{}€ {0:F2} · {1} scontrini">
+                                                        <Binding Path="GrandTotal"/>
+                                                        <Binding Path="TotalSales"/>
+                                                    </MultiBinding>
+                                                </TextBlock.Text>
+                                            </TextBlock>
+                                        </Border>
+                                    </StackPanel>
+                                </Border>
+                                <DataGrid Grid.Row="1" ItemsSource="{Binding ProductRows}" AutoGenerateColumns="False"
+                                          IsReadOnly="True" Background="Transparent" HeadersVisibility="Column">
+                                    <DataGrid.Columns>
+                                        <DataGridTextColumn Header="Reparto" Binding="{Binding Reparto}" Width="110"/>
+                                        <DataGridTextColumn Header="Articolo" Binding="{Binding Articolo}" Width="*"/>
+                                        <DataGridTextColumn Header="Qty" Binding="{Binding Qty}" Width="50"/>
+                                        <DataGridTextColumn Header="Prezzo" Width="70"
+                                                            Binding="{Binding PrezzoUnit, StringFormat='€ {0:F2}'}"/>
+                                        <DataGridTextColumn Header="Totale" Width="80"
+                                                            Binding="{Binding Totale, StringFormat='€ {0:F2}'}"/>
+                                    </DataGrid.Columns>
+                                </DataGrid>
+                            </Grid>
+                        </Border>
+
+                        <!-- Side: dept + payment + shifts -->
+                        <StackPanel Grid.Column="1">
+                            <Border Style="{StaticResource Card}" Padding="0">
+                                <StackPanel>
+                                    <Border Padding="12,8" BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,0,0,0.5">
+                                        <TextBlock Text="Per reparto" FontSize="12" FontWeight="SemiBold"
+                                                   Foreground="{StaticResource TextPrimaryBrush}"/>
+                                    </Border>
+                                    <DataGrid ItemsSource="{Binding DeptRows}" AutoGenerateColumns="False"
+                                              IsReadOnly="True" Background="Transparent" HeadersVisibility="None"
+                                              MaxHeight="200">
+                                        <DataGrid.Columns>
+                                            <DataGridTextColumn Binding="{Binding Reparto}" Width="*"/>
+                                            <DataGridTextColumn Binding="{Binding Qty}" Width="35"/>
+                                            <DataGridTextColumn Width="72"
+                                                                Binding="{Binding Totale, StringFormat='€ {0:F2}'}"/>
+                                        </DataGrid.Columns>
+                                    </DataGrid>
+                                </StackPanel>
+                            </Border>
+
+                            <Border Style="{StaticResource Card}" Padding="0">
+                                <StackPanel>
+                                    <Border Padding="12,8" BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,0,0,0.5">
+                                        <TextBlock Text="Per metodo pagamento" FontSize="12" FontWeight="SemiBold"
+                                                   Foreground="{StaticResource TextPrimaryBrush}"/>
+                                    </Border>
+                                    <DataGrid ItemsSource="{Binding PaymentRows}" AutoGenerateColumns="False"
+                                              IsReadOnly="True" Background="Transparent" HeadersVisibility="None">
+                                        <DataGrid.Columns>
+                                            <DataGridTextColumn Binding="{Binding MetodoPagamento}" Width="*"/>
+                                            <DataGridTextColumn Binding="{Binding NumScontrini}" Width="35"/>
+                                            <DataGridTextColumn Width="72"
+                                                                Binding="{Binding Totale, StringFormat='€ {0:F2}'}"/>
+                                        </DataGrid.Columns>
+                                    </DataGrid>
+                                </StackPanel>
+                            </Border>
+
+                            <Border Style="{StaticResource Card}" Padding="0">
+                                <StackPanel>
+                                    <Border Padding="12,8" BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,0,0,0.5">
+                                        <TextBlock Text="Turni operatori" FontSize="12" FontWeight="SemiBold"
+                                                   Foreground="{StaticResource TextPrimaryBrush}"/>
+                                    </Border>
+                                    <DataGrid ItemsSource="{Binding ShiftRows}" AutoGenerateColumns="False"
+                                              IsReadOnly="True" Background="Transparent" HeadersVisibility="None"
+                                              MaxHeight="160">
+                                        <DataGrid.Columns>
+                                            <DataGridTextColumn Binding="{Binding Operatore}" Width="*"/>
+                                            <DataGridTextColumn Width="55"
+                                                                Binding="{Binding Inizio, StringFormat='{}{0:HH:mm}'}"/>
+                                            <DataGridTextColumn Width="72"
+                                                                Binding="{Binding Totale, StringFormat='€ {0:F2}'}"/>
+                                        </DataGrid.Columns>
+                                    </DataGrid>
+                                </StackPanel>
+                            </Border>
+                        </StackPanel>
+                    </Grid>
+                </Grid>
+            </TabItem>
+
+            <!-- ═══ TAB: CONFIGURAZIONE ══════════════════════════════════ -->
+            <TabItem Header="Configurazione">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel Margin="10" MaxWidth="700">
+
+                        <!-- Scontrino -->
+                        <TextBlock Text="Configurazione scontrino" FontSize="14" FontWeight="SemiBold"
+                                   Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,10"/>
+                        <Border Style="{StaticResource Card}" Margin="0,0,0,14">
+                            <StackPanel>
+                                <TextBlock Text="Testo intestazione" FontSize="12" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,4"/>
+                                <TextBox Text="{Binding ReceiptHeader}" Height="64" TextWrapping="Wrap"
+                                         AcceptsReturn="True" Padding="8" Margin="0,0,0,10"/>
+                                <TextBlock Text="Testo piè di pagina" FontSize="12" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,4"/>
+                                <TextBox Text="{Binding ReceiptFooter}" Height="64" TextWrapping="Wrap"
+                                         AcceptsReturn="True" Padding="8" Margin="0,0,0,10"/>
+                                <CheckBox Content="Stampa prezzi sullo scontrino" IsChecked="{Binding PrintPrices}"
+                                          Margin="0,0,0,6" Foreground="{StaticResource TextPrimaryBrush}"/>
+                                <CheckBox Content="Stampa subtotale per reparto" IsChecked="{Binding PrintDeptSubtotals}"
+                                          Margin="0,0,0,12" Foreground="{StaticResource TextPrimaryBrush}"/>
+                                <Button Content="Salva configurazione scontrino" Style="{StaticResource PrimaryButton}"
+                                        HorizontalAlignment="Left" Padding="12,6" Command="{Binding SaveReceiptConfigCommand}"/>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Metodi pagamento -->
+                        <TextBlock Text="Metodi di pagamento" FontSize="14" FontWeight="SemiBold"
+                                   Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,10"/>
+                        <Border Style="{StaticResource Card}" Margin="0,0,0,14">
+                            <StackPanel>
+                                <Grid Margin="0,0,0,6">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="110"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="62"/>
+                                        <ColumnDefinition Width="80"/>
+                                        <ColumnDefinition Width="30"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0" Text="Chiave" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}"/>
+                                    <TextBlock Grid.Column="1" Text="Etichetta" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" Margin="6,0,0,0"/>
+                                    <TextBlock Grid.Column="2" Text="Attivo" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" Margin="4,0"/>
+                                    <TextBlock Grid.Column="3" Text="Contanti" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}"/>
+                                </Grid>
+                                <ItemsControl ItemsSource="{Binding PaymentMethods}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Grid Margin="0,4">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="110"/>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="62"/>
+                                                    <ColumnDefinition Width="80"/>
+                                                    <ColumnDefinition Width="30"/>
+                                                </Grid.ColumnDefinitions>
+                                                <TextBox Grid.Column="0" Text="{Binding Key}" Height="30" Padding="6,0"
+                                                         VerticalContentAlignment="Center" Margin="0,0,6,0" FontSize="11"/>
+                                                <TextBox Grid.Column="1" Text="{Binding Label}" Height="30" Padding="6,0"
+                                                         VerticalContentAlignment="Center" Margin="0,0,6,0"/>
+                                                <CheckBox Grid.Column="2" IsChecked="{Binding IsActive}"
+                                                          VerticalAlignment="Center" Margin="10,0"/>
+                                                <CheckBox Grid.Column="3" IsChecked="{Binding RequiresCashInput}"
+                                                          VerticalAlignment="Center"/>
+                                                <Button Grid.Column="4" Content="✕" Style="{StaticResource DangerButton}"
+                                                        Width="26" Height="26" Padding="0" FontSize="11"
+                                                        Command="{Binding DataContext.RemovePaymentMethodCommand, RelativeSource={RelativeSource AncestorType=TabItem}}"
+                                                        CommandParameter="{Binding}"/>
+                                            </Grid>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                                <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
+                                    <Button Content="+ Aggiungi" Style="{StaticResource PrimaryButton}" Padding="10,6" Margin="0,0,8,0"
+                                            Command="{Binding AddPaymentMethodCommand}"/>
+                                    <Button Content="Salva metodi" Style="{StaticResource SuccessButton}" Padding="10,6"
+                                            Command="{Binding SavePaymentMethodsCommand}"/>
+                                </StackPanel>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Impostazioni generali -->
+                        <TextBlock Text="Impostazioni generali" FontSize="14" FontWeight="SemiBold"
+                                   Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,10"/>
+                        <Border Style="{StaticResource Card}" Margin="0,0,0,14">
+                            <Grid>
+                                <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="200"/></Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="40"/><RowDefinition Height="40"/>
+                                    <RowDefinition Height="40"/><RowDefinition Height="40"/>
+                                    <RowDefinition Height="40"/>
+                                </Grid.RowDefinitions>
+                                <TextBlock Grid.Row="0" Text="Porta stampante (es. COM3)" VerticalAlignment="Center" Foreground="{StaticResource TextSecondaryBrush}"/>
+                                <TextBox Grid.Row="0" Grid.Column="1" Height="30" Padding="6,0" VerticalContentAlignment="Center" Text="{Binding PrinterPort}"/>
+                                <TextBlock Grid.Row="1" Text="Stampante abilitata" VerticalAlignment="Center" Foreground="{StaticResource TextSecondaryBrush}"/>
+                                <CheckBox Grid.Row="1" Grid.Column="1" VerticalAlignment="Center" IsChecked="{Binding PrinterEnabled}"/>
+                                <TextBlock Grid.Row="2" Text="Mostra totale nel footer" VerticalAlignment="Center" Foreground="{StaticResource TextSecondaryBrush}"/>
+                                <CheckBox Grid.Row="2" Grid.Column="1" VerticalAlignment="Center" IsChecked="{Binding ShowTotalInFooter}"/>
+                                <TextBlock Grid.Row="3" Text="Modalità kiosk (schermo intero)" VerticalAlignment="Center" Foreground="{StaticResource TextSecondaryBrush}"/>
+                                <CheckBox Grid.Row="3" Grid.Column="1" VerticalAlignment="Center" IsChecked="{Binding KioskMode}"/>
+                                <TextBlock Grid.Row="4" Text="Tema scuro" VerticalAlignment="Center" Foreground="{StaticResource TextSecondaryBrush}"/>
+                                <CheckBox Grid.Row="4" Grid.Column="1" VerticalAlignment="Center" IsChecked="{Binding DarkMode}"/>
+                            </Grid>
+                        </Border>
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,14">
+                            <Button Content="Salva impostazioni" Style="{StaticResource PrimaryButton}" Padding="12,7" Margin="0,0,8,0" Command="{Binding SaveSettingsCommand}"/>
+                            <Button Content="Test stampante" Style="{StaticResource DeptTabButton}" Padding="12,7" Command="{Binding TestPrintCommand}"/>
+                        </StackPanel>
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+
+            <!-- ═══ TAB: EVENTO & BACKUP ══════════════════════════════════ -->
+            <TabItem Header="Evento / Backup">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel Margin="10" MaxWidth="620">
+
+                        <TextBlock Text="Crea nuovo evento" FontSize="14" FontWeight="SemiBold"
+                                   Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,10"/>
+                        <Border Style="{StaticResource Card}" Margin="0,0,0,14">
+                            <Grid>
+                                <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                                <TextBox Height="36" Padding="8,0" Margin="0,0,8,0" VerticalContentAlignment="Center"
+                                         Text="{Binding NewEventName, UpdateSourceTrigger=PropertyChanged}"/>
+                                <Button Grid.Column="1" Content="Crea evento" Style="{StaticResource PrimaryButton}"
+                                        Command="{Binding CreateNewEventCommand}"/>
+                            </Grid>
+                        </Border>
+
+                        <TextBlock Text="Chiudi evento corrente" FontSize="14" FontWeight="SemiBold"
+                                   Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,10"/>
+                        <Border Style="{StaticResource Card}" Margin="0,0,0,14">
+                            <StackPanel>
+                                <TextBlock TextWrapping="Wrap" FontSize="12" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,10"
+                                           Text="Il database corrente viene rinominato con data e spostato nell'archivio."/>
+                                <Button Content="Chiudi e archivia evento" Style="{StaticResource WarnButton}"
+                                        HorizontalAlignment="Left" Padding="12,7" Command="{Binding CloseAndArchiveEventCommand}"/>
+                            </StackPanel>
+                        </Border>
+
+                        <TextBlock Text="Archivio eventi" FontSize="14" FontWeight="SemiBold"
+                                   Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,10"/>
+                        <Border Style="{StaticResource Card}" Margin="0,0,0,14">
+                            <ItemsControl ItemsSource="{Binding ArchivedEvents}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Border Background="{StaticResource BgSecondaryBrush}" CornerRadius="6"
+                                                Padding="10,8" Margin="0,3">
+                                            <Grid>
+                                                <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                                                <StackPanel>
+                                                    <TextBlock Text="{Binding Name}" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
+                                                    <TextBlock Text="{Binding Date, StringFormat='{}{0:dd/MM/yyyy HH:mm}'}"
+                                                               FontSize="11" Foreground="{StaticResource TextSecondaryBrush}"/>
+                                                </StackPanel>
+                                                <Button Grid.Column="1" Content="Riapri" Style="{StaticResource PrimaryButton}" Padding="10,5"
+                                                        Command="{Binding DataContext.OpenArchivedEventCommand, RelativeSource={RelativeSource AncestorType=TabItem}}"
+                                                        CommandParameter="{Binding}"/>
+                                            </Grid>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </Border>
+
+                        <TextBlock Text="Backup e chiavetta USB" FontSize="14" FontWeight="SemiBold"
+                                   Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,10"/>
+                        <Border Style="{StaticResource Card}">
+                            <WrapPanel>
+                                <Button Content="Backup ora" Style="{StaticResource PrimaryButton}" Padding="12,7" Margin="0,0,8,0" Command="{Binding RunManualBackupCommand}"/>
+                                <Button Content="Backup su USB" Style="{StaticResource PrimaryButton}" Padding="12,7" Margin="0,0,8,0" Command="{Binding BackupToUsbCommand}"/>
+                                <Button Content="Esporta config USB" Style="{StaticResource SuccessButton}" Padding="12,7" Margin="0,0,8,0" Command="{Binding ExportConfigToUsbCommand}"/>
+                                <Button Content="Importa config USB" Style="{StaticResource WarnButton}" Padding="12,7" Command="{Binding ImportConfigFromUsbCommand}"/>
+                            </WrapPanel>
+                        </Border>
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+
+        </TabControl>
+
+        <!-- Status bar -->
+        <Border Grid.Row="2" Background="{StaticResource BgPrimaryBrush}"
+                BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,0.5,0,0">
+            <TextBlock Text="{Binding StatusMessage}" VerticalAlignment="Center"
+                       Margin="14,0" FontSize="12" Foreground="{StaticResource TextSecondaryBrush}"/>
+        </Border>
+    </Grid>
+</Window>
