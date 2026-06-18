@@ -7,7 +7,7 @@ Applicazione Windows WPF (.NET 10) per la gestione della cassa agli eventi dell'
 - Windows 10/11
 - .NET 10 SDK (https://dotnet.microsoft.com/download)
 - Visual Studio 2022 v17.12+ oppure VS Code con estensione C#
-- Stampante termica ESC/POS su porta seriale/USB (opzionale — la cassa funziona anche senza)
+- Stampante Windows configurata nel sistema (opzionale — la cassa funziona anche senza)
 
 ## Struttura progetto
 
@@ -128,14 +128,14 @@ dotnet publish -c Release -r win-x64 --self-contained true -p:PublishSingleFile=
 - Configurazione reparti e listino (salvati in JSON)
 - Gestione metodi di pagamento (aggiungi/rimuovi/attiva)
 - Configurazione scontrino (header, footer, stampa prezzi, subtotali reparto)
-- Impostazioni: porta stampante, modalità kiosk, tema scuro
+- Impostazioni: stampante configurata, modalità kiosk
 - Creazione nuovo evento
 - Chiusura e storicizzazione evento (rinomina db con data)
 - Archivio eventi con riapertura
 - Backup manuale e automatico (configurabile ogni N minuti)
 - Backup su chiavetta USB
 - Export/Import configurazione da USB
-- Reportistica vendite con filtro date ed export CSV
+- Reportistica in finestra dedicata con incasso giornaliero, ordini giornalieri, export Excel e anteprima scontrino
 
 ### Sicurezza
 - Login operatori con password hashata (BCrypt)

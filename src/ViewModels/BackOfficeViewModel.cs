@@ -17,18 +17,17 @@ public partial class BackOfficeViewModel : BaseViewModel
     public DepartmentsViewModel Departments { get; }
     public ProductsViewModel Products { get; }
     public OperatorsViewModel Operators { get; }
-    public ReportViewModel Report { get; }
 
     public BackOfficeViewModel(
         EventService events, ConfigService config, BackupService backup,
         UsbService usb, PrintingService printing,
         DepartmentsViewModel departments, ProductsViewModel products,
-        OperatorsViewModel operators, ReportViewModel report)
+        OperatorsViewModel operators)
     {
         _events = events; _config = config; _backup = backup;
         _usb = usb; _printing = printing;
         Departments = departments; Products = products;
-        Operators = operators; Report = report;
+        Operators = operators;
 
         LoadSettings();
         LoadPaymentMethods();
@@ -85,19 +84,24 @@ public partial class BackOfficeViewModel : BaseViewModel
     // ── Settings ──────────────────────────────────────────────────────────
 
     [ObservableProperty] private bool _printerEnabled;
-    [ObservableProperty] private string _printerPort = "COM3";
+    [ObservableProperty] private string _selectedPrinter = string.Empty;
+    [ObservableProperty] private ObservableCollection<string> _availablePrinters = [];
     [ObservableProperty] private bool _showTotalInFooter;
     [ObservableProperty] private bool _kioskMode;
-    [ObservableProperty] private bool _darkMode;
     [ObservableProperty] private bool _autoBackupEnabled;
     [ObservableProperty] private int _autoBackupIntervalMinutes = 30;
 
     private void LoadSettings()
     {
         var s = App.CurrentSettings;
-        PrinterEnabled = s.PrinterEnabled; PrinterPort = s.PrinterPort;
+        PrinterEnabled = s.PrinterEnabled;
+        AvailablePrinters = new(_printing.GetInstalledPrinters());
+        if (string.IsNullOrWhiteSpace(s.PrinterName))
+            SelectedPrinter = AvailablePrinters.FirstOrDefault() ?? string.Empty;
+        else
+            SelectedPrinter = AvailablePrinters.Contains(s.PrinterName) ? s.PrinterName : AvailablePrinters.FirstOrDefault() ?? string.Empty;
         ShowTotalInFooter = s.ShowTotalInFooter; KioskMode = s.KioskMode;
-        DarkMode = s.DarkMode; AutoBackupEnabled = s.AutoBackupEnabled;
+        AutoBackupEnabled = s.AutoBackupEnabled;
         AutoBackupIntervalMinutes = s.AutoBackupIntervalMinutes;
     }
 
@@ -105,11 +109,10 @@ public partial class BackOfficeViewModel : BaseViewModel
     private void SaveSettings()
     {
         var s = App.CurrentSettings;
-        s.PrinterEnabled = PrinterEnabled; s.PrinterPort = PrinterPort;
+        s.PrinterEnabled = PrinterEnabled; s.PrinterName = SelectedPrinter;
         s.ShowTotalInFooter = ShowTotalInFooter; s.KioskMode = KioskMode;
         s.AutoBackupEnabled = AutoBackupEnabled; s.AutoBackupIntervalMinutes = AutoBackupIntervalMinutes;
         _config.SaveAppSettings(s);
-        if (DarkMode != s.DarkMode) App.ApplyTheme(DarkMode);
         StatusMessage = "Impostazioni salvate.";
     }
 

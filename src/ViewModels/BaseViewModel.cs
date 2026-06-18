@@ -10,8 +10,8 @@ public abstract partial class BaseViewModel : ObservableObject
     [ObservableProperty] private string _statusMessage = string.Empty;
 
     protected static void ShowError(string msg)
-        => MessageBox.Show(msg, "Errore", MessageBoxButton.OK, MessageBoxImage.Warning);
+        => System.Windows.MessageBox.Show(msg, "Errore", MessageBoxButton.OK, MessageBoxImage.Warning);
 
     protected static bool Confirm(string msg, string title = "Conferma")
-        => MessageBox.Show(msg, title, MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes;
+        => System.Windows.MessageBox.Show(msg, title, MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes;
 }

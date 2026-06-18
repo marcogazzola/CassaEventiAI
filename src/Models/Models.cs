@@ -1,3 +1,4 @@
+using CommunityToolkit.Mvvm.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
@@ -108,11 +109,10 @@ public class AppSettings
 {
     public string ActiveDbPath { get; set; } = string.Empty;
     public string ActiveEventName { get; set; } = string.Empty;
-    public string PrinterPort { get; set; } = "COM3";
+    public string PrinterName { get; set; } = string.Empty;
     public bool PrinterEnabled { get; set; } = true;
     public bool ShowTotalInFooter { get; set; } = true;
     public bool KioskMode { get; set; }
-    public bool DarkMode { get; set; }
     public bool AutoBackupEnabled { get; set; } = true;
     public int AutoBackupIntervalMinutes { get; set; } = 30;
     public string ArchiveFolderPath { get; set; } = string.Empty;
@@ -121,14 +121,19 @@ public class AppSettings
 
 // ── View/Transfer Models ───────────────────────────────────────────────────
 
-public class CartItem
+public partial class CartItem : ObservableObject
 {
     public int ProductId { get; set; }
     public string ProductName { get; set; } = string.Empty;
     public int DepartmentId { get; set; }
     public string DepartmentName { get; set; } = string.Empty;
     public decimal UnitPrice { get; set; }
-    public int Quantity { get; set; } = 1;
+
+    [ObservableProperty]
+    private int _quantity = 1;
+
+    partial void OnQuantityChanged(int value) => OnPropertyChanged(nameof(LineTotal));
+
     public decimal LineTotal => UnitPrice * Quantity;
 }
 
@@ -147,3 +152,17 @@ public class ShiftSummary
     public TimeSpan Duration { get; set; }
     public Dictionary<string, decimal> TotalByPaymentMethod { get; set; } = [];
 }
+
+public class ProductGroup
+{
+    public int DepartmentId { get; set; }
+    public string DepartmentName { get; set; } = string.Empty;
+    public string DepartmentColor { get; set; } = "#378ADD";
+    public List<Product> Products { get; set; } = [];
+}
+
+public record SaleLookupRow(int SaleId, DateTime CreatedAt, string OperatorName, decimal Total, bool IsVoided = false);
+
+public record DailyProductSalesRow(string ProductName, int Quantity, decimal TotalAmount);
+
+public record DailyOrderRow(int SaleId, DateTime CreatedAt, string OperatorName, string PaymentMethod, decimal Total, bool IsVoided);

@@ -26,12 +26,14 @@ public partial class ProductsViewModel(ProductService products) : BaseViewModel
     [ObservableProperty] private int _editStockQty;
     [ObservableProperty] private int _editSortOrder;
 
-    partial void OnFilterDeptChanged(Department? _) => ApplyFilter();
-    partial void OnSearchTextChanged(string _) => ApplyFilter();
+    partial void OnFilterDeptChanged(Department? value) => ApplyFilter();
+    partial void OnSearchTextChanged(string value) => ApplyFilter();
 
     public void Load()
     {
-        Departments = new(products.GetDepartments(activeOnly: false));
+        var depts = products.GetDepartments(activeOnly: false).ToList();
+        depts.Insert(0, new Department { Id = 0, Name = "— Tutti i reparti —", Color = "#CCCCCC" });
+        Departments = new(depts);
         AllProducts = new(products.GetProducts(activeOnly: false));
         ApplyFilter();
     }
@@ -39,7 +41,8 @@ public partial class ProductsViewModel(ProductService products) : BaseViewModel
     private void ApplyFilter()
     {
         var q = AllProducts.AsEnumerable();
-        if (FilterDept != null) q = q.Where(p => p.DepartmentId == FilterDept.Id);
+        if (FilterDept != null && FilterDept.Id > 0)
+            q = q.Where(p => p.DepartmentId == FilterDept.Id);
         if (!string.IsNullOrWhiteSpace(SearchText))
             q = q.Where(p => p.Name.Contains(SearchText, StringComparison.OrdinalIgnoreCase));
         FilteredProducts = new(q);
@@ -49,8 +52,9 @@ public partial class ProductsViewModel(ProductService products) : BaseViewModel
 
     [RelayCommand] private void New()
     {
+        var defaultDepartment = Departments.FirstOrDefault();
         Selected = null; EditName = ""; EditPrice = 0; EditIsActive = true;
-        EditDeptId = Departments.FirstOrDefault()?.Id ?? 0; EditTrackStock = false;
+        EditDeptId = defaultDepartment?.Id ?? 0; EditTrackStock = false;
         EditStockQty = 0; EditSortOrder = AllProducts.Count; IsNew = true; IsEditing = true;
     }
 

@@ -2,7 +2,10 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CplCassaEventi.Models;
 using CplCassaEventi.Services;
+using CplCassaEventi.Views.Shared;
 using System.Collections.ObjectModel;
+using System.Windows;
+using System.Windows.Threading;
 
 namespace CplCassaEventi.ViewModels;
 
@@ -12,86 +15,117 @@ public partial class FrontOfficeViewModel : BaseViewModel
     private readonly ProductService _products;
     private readonly PrintingService _printing;
     private readonly ConfigService _config;
+    private readonly DispatcherTimer _clockTimer;
     private int? _currentShiftId;
+    public event Action? ShiftClosed;
 
     public FrontOfficeViewModel(
         SaleService sales, ProductService products,
         PrintingService printing, ConfigService config)
     {
-        _sales = sales; _products = products;
-        _printing = printing; _config = config;
+        _sales = sales;
+        _products = products;
+        _printing = printing;
+        _config = config;
+
+        _clockTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
+        _clockTimer.Tick += (_, _) => ToolbarDateTime = DateTime.Now.ToString("dd/MM/yyyy HH:mm:ss");
+        ToolbarDateTime = DateTime.Now.ToString("dd/MM/yyyy HH:mm:ss");
+        _clockTimer.Start();
+
         ReloadProducts();
         _ = RefreshStatsAsync();
     }
 
-    // ── Products & departments ─────────────────────────────────────────────
-
     [ObservableProperty] private ObservableCollection<Department> _departments = [];
+    [ObservableProperty] private ObservableCollection<ProductGroup> _groupedProducts = [];
     [ObservableProperty] private ObservableCollection<Product> _allProducts = [];
-    [ObservableProperty] private ObservableCollection<Product> _filteredProducts = [];
-    [ObservableProperty] private Department? _selectedDepartment;
-
-    partial void OnSelectedDepartmentChanged(Department? value) => ApplyDeptFilter();
-
-    [RelayCommand]
-    public void ReloadProducts()
-    {
-        var depts = _products.GetDepartments();
-        var prods = _products.GetProducts();
-        Departments = new(depts);
-        AllProducts = new(prods);
-        ApplyDeptFilter();
-        PaymentMethods = new(_config.LoadPaymentMethods().Where(p => p.IsActive));
-        SelectedPaymentMethod = PaymentMethods.FirstOrDefault();
-    }
-
-    [RelayCommand]
-    private void SelectDept(Department? d)
-    {
-        SelectedDepartment = d;
-        ApplyDeptFilter();
-    }
-
-    [RelayCommand]
-    private void ClearDeptFilter()
-    {
-        SelectedDepartment = null;
-        ApplyDeptFilter();
-    }
-
-    private void ApplyDeptFilter()
-        => FilteredProducts = SelectedDepartment == null
-            ? new(AllProducts)
-            : new(AllProducts.Where(p => p.DepartmentId == SelectedDepartment.Id));
-
-    // ── Cart ──────────────────────────────────────────────────────────────
-
     [ObservableProperty] private ObservableCollection<CartItem> _cartItems = [];
     [ObservableProperty] private decimal _discountPct;
     [ObservableProperty] private decimal _subtotal;
     [ObservableProperty] private decimal _total;
+    [ObservableProperty] private int _cartQuantityCount;
     [ObservableProperty] private decimal _cashGiven;
     [ObservableProperty] private decimal _change;
+    [ObservableProperty] private ObservableCollection<PaymentMethod> _paymentMethods = [];
+    [ObservableProperty] private PaymentMethod? _selectedPaymentMethod;
+    [ObservableProperty] private bool _showCashInput;
+    [ObservableProperty] private int _salesCount;
+    [ObservableProperty] private decimal _totalIncassato;
+    [ObservableProperty] private decimal _lastOrderAmount;
+    [ObservableProperty] private bool _showTotalInFooter;
+    [ObservableProperty] private string _toolbarDateTime = string.Empty;
+    [ObservableProperty] private bool _voidPanelVisible;
+    [ObservableProperty] private string _voidReason = string.Empty;
+    [ObservableProperty] private string _voidSearchText = string.Empty;
+    [ObservableProperty] private ObservableCollection<SaleLookupRow> _voidSearchResults = [];
+    [ObservableProperty] private SaleLookupRow? _selectedVoidSale;
 
-    partial void OnDiscountPctChanged(decimal _) => RecalcTotals();
-    partial void OnCashGivenChanged(decimal v)
+    partial void OnDiscountPctChanged(decimal value)
+    {
+        DiscountPct = Math.Round(Math.Max(0, value), 2);
+        RecalcTotals();
+    }
+
+    partial void OnCashGivenChanged(decimal value)
     {
         if (SelectedPaymentMethod?.RequiresCashInput == true)
-            Change = Math.Max(0, v - Total);
+            Change = Math.Max(0, value - Total);
+    }
+
+    partial void OnSelectedPaymentMethodChanged(PaymentMethod? value)
+    {
+        ShowCashInput = value?.RequiresCashInput == true;
+        if (!ShowCashInput)
+        {
+            CashGiven = 0;
+            Change = 0;
+        }
+        else
+        {
+            Change = Math.Max(0, CashGiven - Total);
+        }
+    }
+
+    [RelayCommand]
+    public void ReloadProducts()
+    {
+        var selectedPaymentKey = SelectedPaymentMethod?.Key;
+        var depts = _products.GetDepartments();
+        var groups = _products.GetProductGroupsByDepartment();
+        var products = _products.GetProducts();
+        Departments = new(depts);
+        GroupedProducts = new(groups);
+        AllProducts = new(products);
+        PaymentMethods = new(_config.LoadPaymentMethods().Where(p => p.IsActive));
+        SelectedPaymentMethod = PaymentMethods.FirstOrDefault(p => p.Key == selectedPaymentKey)
+            ?? PaymentMethods.FirstOrDefault();
     }
 
     [RelayCommand]
     public void AddProduct(Product p)
     {
         var existing = CartItems.FirstOrDefault(i => i.ProductId == p.Id);
-        if (existing != null) { existing.Quantity++; OnPropertyChanged(nameof(CartItems)); }
+        var requestedQty = (existing?.Quantity ?? 0) + 1;
+        if (!_products.CanAddToCart(p.Id, requestedQty))
+        {
+            ShowError("Stock insufficiente per questo articolo.");
+            return;
+        }
+
+        if (existing != null)
+        {
+            existing.Quantity++;
+        }
         else
         {
             var dept = Departments.FirstOrDefault(d => d.Id == p.DepartmentId);
             CartItems.Add(new CartItem
             {
-                ProductId = p.Id, ProductName = p.Name,
-                DepartmentId = p.DepartmentId, DepartmentName = dept?.Name ?? "",
+                ProductId = p.Id,
+                ProductName = p.Name,
+                DepartmentId = p.DepartmentId,
+                DepartmentName = dept?.Name ?? string.Empty,
                 UnitPrice = p.Price
             });
         }
@@ -99,51 +133,35 @@ public partial class FrontOfficeViewModel : BaseViewModel
     }
 
     [RelayCommand]
-    public void IncreaseQty(CartItem item) { item.Quantity++; OnPropertyChanged(nameof(CartItems)); RecalcTotals(); }
+    public void IncreaseQty(CartItem item)
+    {
+        var requestedQty = item.Quantity + 1;
+        if (!_products.CanAddToCart(item.ProductId, requestedQty))
+        {
+            ShowError("Stock insufficiente per questo articolo.");
+            return;
+        }
+        item.Quantity++;
+        RecalcTotals();
+    }
 
     [RelayCommand]
     public void DecreaseQty(CartItem item)
     {
         if (item.Quantity <= 1) CartItems.Remove(item);
-        else { item.Quantity--; OnPropertyChanged(nameof(CartItems)); }
+        else item.Quantity--;
         RecalcTotals();
     }
-
-    [RelayCommand]
-    public void RemoveItem(CartItem item) { CartItems.Remove(item); RecalcTotals(); }
 
     [RelayCommand]
     public void ClearCart()
     {
-        CartItems.Clear(); DiscountPct = 0; CashGiven = 0; Change = 0;
+        CartItems.Clear();
+        DiscountPct = 0;
+        CashGiven = 0;
+        Change = 0;
         RecalcTotals();
     }
-
-    private void RecalcTotals()
-    {
-        Subtotal = CartItems.Sum(i => i.LineTotal);
-        Total = Math.Round(Subtotal * (1 - DiscountPct / 100m), 2);
-        if (SelectedPaymentMethod?.RequiresCashInput == true)
-            Change = Math.Max(0, CashGiven - Total);
-    }
-
-    // ── Payment methods ───────────────────────────────────────────────────
-
-    [ObservableProperty] private ObservableCollection<PaymentMethod> _paymentMethods = [];
-    [ObservableProperty] private PaymentMethod? _selectedPaymentMethod;
-    [ObservableProperty] private bool _showCashInput;
-
-    partial void OnSelectedPaymentMethodChanged(PaymentMethod? v)
-    {
-        ShowCashInput = v?.RequiresCashInput == true;
-        if (!ShowCashInput) { CashGiven = 0; Change = 0; }
-        else Change = Math.Max(0, CashGiven - Total);
-    }
-
-    [RelayCommand]
-    private void SelectPayment(PaymentMethod pm) => SelectedPaymentMethod = pm;
-
-    // ── Checkout ──────────────────────────────────────────────────────────
 
     [RelayCommand]
     private async Task CheckoutAsync()
@@ -151,7 +169,10 @@ public partial class FrontOfficeViewModel : BaseViewModel
         if (CartItems.Count == 0) { ShowError("Il carrello è vuoto."); return; }
         if (SelectedPaymentMethod == null) { ShowError("Seleziona un metodo di pagamento."); return; }
         if (SelectedPaymentMethod.RequiresCashInput && CashGiven < Total)
-            { ShowError($"Importo contanti insufficiente (mancano € {Total - CashGiven:F2})."); return; }
+        {
+            ShowError($"Importo contanti insufficiente (mancano € {Total - CashGiven:F2}).");
+            return;
+        }
 
         IsBusy = true;
         try
@@ -164,70 +185,138 @@ public partial class FrontOfficeViewModel : BaseViewModel
             if (!result.Success) { ShowError(result.Error ?? "Errore durante la vendita."); return; }
 
             var sale = await _sales.GetSaleByIdAsync(result.SaleId);
-            if (sale != null) _printing.PrintSale(sale);
+            if (sale != null)
+                _printing.PrintSale(sale, null, Departments.ToList());
 
             ClearCart();
+            ReloadProducts();
             await RefreshStatsAsync();
             StatusMessage = $"Scontrino #{result.SaleId} emesso.";
         }
         finally { IsBusy = false; }
     }
 
-    // ── Void / Reprint ────────────────────────────────────────────────────
-
-    [ObservableProperty] private bool _voidPanelVisible;
-    [ObservableProperty] private string _voidSaleIdText = string.Empty;
-    [ObservableProperty] private string _voidReason = string.Empty;
-
     [RelayCommand]
-    private void OpenVoidPanel() => VoidPanelVisible = true;
-
-    [RelayCommand]
-    private void CloseVoidPanel() { VoidPanelVisible = false; VoidSaleIdText = ""; VoidReason = ""; }
-
-    [RelayCommand]
-    private async Task ConfirmVoidAsync()
-    {
-        if (!int.TryParse(VoidSaleIdText, out var id)) { ShowError("ID scontrino non valido."); return; }
-        if (string.IsNullOrWhiteSpace(VoidReason)) { ShowError("Inserisci il motivo dello storno."); return; }
-        if (!Confirm($"Annullare lo scontrino #{id}?\nMotivo: {VoidReason}")) return;
-
-        var ok = await _sales.VoidSaleAsync(id, VoidReason);
-        if (ok)
-        {
-            StatusMessage = $"Scontrino #{id} annullato.";
-            CloseVoidPanel();
-            await RefreshStatsAsync();
-        }
-        else ShowError($"Scontrino #{id} non trovato o già annullato.");
-    }
+    private void SelectPayment(PaymentMethod pm) => SelectedPaymentMethod = pm;
 
     [RelayCommand]
     private async Task ReprintLastAsync()
     {
         var sale = await _sales.GetLastSaleAsync();
         if (sale == null) { ShowError("Nessuno scontrino da ristampare."); return; }
-        _printing.ReprintLast(sale);
+        _printing.ReprintLast(sale, null, Departments.ToList());
         StatusMessage = $"Scontrino #{sale.Id} ristampato.";
     }
 
-    // ── Footer stats ──────────────────────────────────────────────────────
-
-    [ObservableProperty] private int _salesCount;
-    [ObservableProperty] private decimal _totalIncassato;
-    [ObservableProperty] private decimal _lastOrderAmount;
-    [ObservableProperty] private bool _showTotalInFooter;
-
-    private async Task RefreshStatsAsync()
+    [RelayCommand]
+    private void PreviewCurrentReceipt()
     {
-        var (count, total, last) = await _sales.GetSessionStatsAsync(_currentShiftId);
-        SalesCount = count;
-        TotalIncassato = total;
-        LastOrderAmount = last;
-        ShowTotalInFooter = App.CurrentSettings.ShowTotalInFooter;
+        if (CartItems.Count == 0)
+        {
+            ShowError("Il carrello è vuoto.");
+            return;
+        }
+
+        var previewSale = new Sale
+        {
+            Id = 0,
+            CreatedAt = DateTime.Now,
+            OperatorName = "ANTEPRIMA",
+            PaymentMethodKey = SelectedPaymentMethod?.Key ?? "cash",
+            PaymentMethodLabel = SelectedPaymentMethod?.Label ?? "Contanti",
+            CashGiven = CashGiven,
+            Change = Change,
+            DiscountPct = DiscountPct,
+            Subtotal = Subtotal,
+            Total = Total,
+            Items = CartItems.Select(i => new SaleItem
+            {
+                ProductId = i.ProductId,
+                ProductName = i.ProductName,
+                DepartmentId = i.DepartmentId,
+                DepartmentName = i.DepartmentName,
+                Quantity = i.Quantity,
+                UnitPrice = i.UnitPrice,
+                LineTotal = i.LineTotal
+            }).ToList()
+        };
+
+        var preview = _printing.BuildSalePreview(previewSale, null, Departments.ToList());
+        var win = new ReceiptPreviewWindow(preview, "Anteprima scontrino");
+        if (System.Windows.Application.Current.MainWindow != null)
+            win.Owner = System.Windows.Application.Current.MainWindow;
+        win.ShowDialog();
     }
 
-    // ── Shift ─────────────────────────────────────────────────────────────
+    [RelayCommand]
+    private async Task OpenVoidPanelAsync()
+    {
+        VoidReason = string.Empty;
+        VoidSearchText = string.Empty;
+        SelectedVoidSale = null;
+        VoidPanelVisible = true;
+        await SearchVoidSalesAsync();
+    }
+
+    [RelayCommand]
+    private void CloseVoidPanel()
+    {
+        VoidPanelVisible = false;
+        VoidReason = string.Empty;
+        VoidSearchText = string.Empty;
+        SelectedVoidSale = null;
+        VoidSearchResults = [];
+    }
+
+    [RelayCommand]
+    private async Task SearchVoidSalesAsync()
+    {
+        var rows = await _sales.SearchIssuedSalesAsync(VoidSearchText);
+        VoidSearchResults = new(rows);
+        if (SelectedVoidSale == null)
+            SelectedVoidSale = VoidSearchResults.FirstOrDefault();
+    }
+
+    [RelayCommand]
+    private void SelectVoidSale(SaleLookupRow row) => SelectedVoidSale = row;
+
+    [RelayCommand]
+    private async Task ConfirmVoidAsync()
+    {
+        if (SelectedVoidSale == null) { ShowError("Seleziona uno scontrino."); return; }
+
+        if (SelectedVoidSale.IsVoided)
+        {
+            // Riattiva uno scontrino stornato
+            if (!Confirm($"Riattivare lo scontrino #{SelectedVoidSale.SaleId}?")) return;
+            var ok = await _sales.ReactivateSaleAsync(SelectedVoidSale.SaleId);
+            if (!ok)
+            {
+                ShowError($"Impossibile riattivare lo scontrino #{SelectedVoidSale.SaleId}.");
+                return;
+            }
+            StatusMessage = $"Scontrino #{SelectedVoidSale.SaleId} riattivato.";
+            VoidReason = string.Empty;
+        }
+        else
+        {
+            // Annulla uno scontrino attivo
+            if (string.IsNullOrWhiteSpace(VoidReason)) { ShowError("Inserisci il motivo dello storno."); return; }
+            if (!Confirm($"Annullare lo scontrino #{SelectedVoidSale.SaleId}?\nMotivo: {VoidReason}")) return;
+
+            var ok = await _sales.VoidSaleAsync(SelectedVoidSale.SaleId, VoidReason);
+            if (!ok)
+            {
+                ShowError($"Scontrino #{SelectedVoidSale.SaleId} non trovato o già annullato.");
+                return;
+            }
+            StatusMessage = $"Scontrino #{SelectedVoidSale.SaleId} annullato.";
+        }
+
+        CloseVoidPanel();
+        ReloadProducts();
+        await RefreshStatsAsync();
+    }
 
     public void SetShift(int shiftId) => _currentShiftId = shiftId;
 
@@ -241,5 +330,24 @@ public partial class FrontOfficeViewModel : BaseViewModel
         var byMethod = string.Join(", ", summary.TotalByPaymentMethod.Select(kv => $"{kv.Key}: €{kv.Value:F2}"));
         StatusMessage = $"Turno chiuso · {summary.SalesCount} scontrini · €{summary.TotalAmount:F2} · {byMethod}";
         await RefreshStatsAsync();
+        ShiftClosed?.Invoke();
+    }
+
+    private void RecalcTotals()
+    {
+        CartQuantityCount = CartItems.Sum(i => i.Quantity);
+        Subtotal = CartItems.Sum(i => i.LineTotal);
+        Total = Math.Round(Subtotal * (1 - DiscountPct / 100m), 2);
+        if (SelectedPaymentMethod?.RequiresCashInput == true)
+            Change = Math.Max(0, CashGiven - Total);
+    }
+
+    private async Task RefreshStatsAsync()
+    {
+        var (count, total, last) = await _sales.GetSessionStatsAsync(_currentShiftId);
+        SalesCount = count;
+        TotalIncassato = total;
+        LastOrderAmount = last;
+        ShowTotalInFooter = App.CurrentSettings.ShowTotalInFooter;
     }
 }

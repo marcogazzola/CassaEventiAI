@@ -26,7 +26,7 @@
                          Height="38" Padding="10,0" Margin="0,0,0,10" VerticalContentAlignment="Center"/>
 
                 <TextBlock Text="Password" FontSize="12" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,4"/>
-                <PasswordBox x:Name="PasswordBox" Height="38" Padding="10,0" Margin="0,0,0,8"
+                <PasswordBox x:Name="PasswordBox" Height="38" Padding="10,0" Margin="0,0,0,8"  VerticalContentAlignment="Center"
                              PasswordChanged="PwdBox_PasswordChanged"/>
 
                 <TextBlock Text="{Binding ErrorMessage}" FontSize="12"
@@ -51,10 +51,12 @@
 
                 <TextBlock Text="Nuova password" FontSize="12" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,4"/>
                 <PasswordBox x:Name="NewPwdBox" Height="38" Padding="10,0" Margin="0,0,0,10"
+                             VerticalContentAlignment="Center"
                              PasswordChanged="NewPwdBox_PasswordChanged"/>
 
                 <TextBlock Text="Conferma password" FontSize="12" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,4"/>
                 <PasswordBox x:Name="ConfirmPwdBox" Height="38" Padding="10,0" Margin="0,0,0,8"
+                             VerticalContentAlignment="Center"
                              PasswordChanged="ConfirmPwdBox_PasswordChanged"/>
 
                 <TextBlock Text="{Binding ErrorMessage}" FontSize="12"

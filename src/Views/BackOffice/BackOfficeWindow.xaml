@@ -2,7 +2,7 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:conv="clr-namespace:CplCassaEventi.Converters"
-        Title="BackOffice — CPL Cassa" Height="760" Width="1020"
+        Title="Settings — Cassa per Sagra" Height="760" Width="1020"
         WindowStartupLocation="CenterOwner">
     <Window.Resources>
         <conv:BoolToVisibilityConverter x:Key="BoolToVis"/>
@@ -22,7 +22,7 @@
                 BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,0,0,0.5">
             <Grid Margin="16,0">
                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                    <TextBlock Text="BackOffice" FontSize="17" FontWeight="SemiBold"
+                    <TextBlock Text="Settings" FontSize="17" FontWeight="SemiBold"
                                Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center"/>
                     <Border Background="{StaticResource AccentBlueBgBrush}" CornerRadius="12" Padding="8,3" Margin="10,0,0,0">
                         <TextBlock Text="{Binding ActiveEventName}" FontSize="12"
@@ -35,7 +35,8 @@
             </Grid>
         </Border>
 
-        <TabControl Grid.Row="1" Margin="10" Background="Transparent"
+        <TabControl x:Name="MainTabs" Grid.Row="1" Margin="10" Background="Transparent"
+                    SelectionChanged="MainTabs_SelectionChanged"
                     BorderBrush="{StaticResource BorderBrush}">
 
             <!-- ═══ TAB: REPARTI ═══════════════════════════════════════════ -->
@@ -63,6 +64,15 @@
                                       HeadersVisibility="Column" Margin="0"
                                       SelectedItem="{Binding Selected}">
                                 <DataGrid.Columns>
+                                    <DataGridTemplateColumn Header="Colore" Width="70">
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <Border Width="42" Height="18" CornerRadius="6"
+                                                        Background="{Binding Color, Converter={StaticResource HexBrush}, ConverterParameter=#378ADD}"
+                                                        BorderBrush="{StaticResource BorderBrush}" BorderThickness="0.5"/>
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
                                     <DataGridTextColumn Header="Nome" Binding="{Binding Name}" Width="*"/>
                                     <DataGridCheckBoxColumn Header="Attivo" Binding="{Binding IsActive}" Width="60"/>
                                     <DataGridCheckBoxColumn Header="Scontrino sep." Binding="{Binding PrintSeparateReceipt}" Width="100"/>
@@ -72,10 +82,10 @@
                                             <DataTemplate>
                                                 <StackPanel Orientation="Horizontal">
                                                     <Button Content="✎" Style="{StaticResource PrimaryButton}" Padding="6,2" FontSize="11"
-                                                            Command="{Binding DataContext.EditCommand, RelativeSource={RelativeSource AncestorType=TabItem}}"
+                                                            Command="{Binding DataContext.EditCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
                                                             CommandParameter="{Binding}"/>
                                                     <Button Content="✕" Style="{StaticResource DangerButton}" Padding="6,2" FontSize="11"
-                                                            Command="{Binding DataContext.DeleteCommand, RelativeSource={RelativeSource AncestorType=TabItem}}"
+                                                            Command="{Binding DataContext.DeleteCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
                                                             CommandParameter="{Binding}"/>
                                                 </StackPanel>
                                             </DataTemplate>
@@ -95,9 +105,16 @@
                             <TextBlock Text="Nome *" FontSize="12" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,4"/>
                             <TextBox Text="{Binding EditName, UpdateSourceTrigger=PropertyChanged}"
                                      Height="34" Padding="8,0" Margin="0,0,0,10" VerticalContentAlignment="Center"/>
-                            <TextBlock Text="Colore (hex)" FontSize="12" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,4"/>
-                            <TextBox Text="{Binding EditColor, UpdateSourceTrigger=PropertyChanged}"
-                                     Height="34" Padding="8,0" Margin="0,0,0,10" VerticalContentAlignment="Center"/>
+                            <TextBlock Text="Colore" FontSize="12" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,4"/>
+                            <Grid Margin="0,0,0,10">
+                                <Grid.ColumnDefinitions><ColumnDefinition Width="120"/><ColumnDefinition Width="8"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                <Button Grid.Column="0" Content="Scegli colore" Height="34" Click="PickDepartmentColor_Click"
+                                        Background="{Binding EditColor, Converter={StaticResource HexBrush}, ConverterParameter=#378ADD}"
+                                        BorderBrush="{Binding EditColor, Converter={StaticResource HexBrush}, ConverterParameter=#378ADD}"
+                                        Foreground="{Binding EditColor, Converter={StaticResource HexForeground}, ConverterParameter=#378ADD}"/>
+                                <TextBox Grid.Column="2" Text="{Binding EditColor}" IsReadOnly="True"
+                                         Height="34" Padding="8,0" VerticalContentAlignment="Center"/>
+                            </Grid>
                             <TextBlock Text="Ordine" FontSize="12" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,4"/>
                             <TextBox Text="{Binding EditSortOrder, UpdateSourceTrigger=PropertyChanged}"
                                      Height="34" Padding="8,0" Margin="0,0,0,10" VerticalContentAlignment="Center"/>
@@ -119,7 +136,7 @@
             </TabItem>
 
             <!-- ═══ TAB: ARTICOLI ══════════════════════════════════════════ -->
-            <TabItem Header="Articoli" DataContext="{Binding Products}">
+            <TabItem x:Name="ProductsTab" Header="Articoli" DataContext="{Binding Products}">
                 <Grid Margin="10">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*"/>
@@ -145,7 +162,7 @@
                             <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="10,8">
                                 <TextBox Width="180" Height="30" Padding="6,0" VerticalContentAlignment="Center" Margin="0,0,8,0"
                                          Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"/>
-                                <ComboBox Width="130" Height="30"
+                                <ComboBox Width="130" Height="30" VerticalAlignment="Center"
                                           ItemsSource="{Binding Departments}"
                                           SelectedItem="{Binding FilterDept}"
                                           DisplayMemberPath="Name"/>
@@ -166,10 +183,10 @@
                                             <DataTemplate>
                                                 <StackPanel Orientation="Horizontal">
                                                     <Button Content="✎" Style="{StaticResource PrimaryButton}" Padding="6,2" FontSize="11" Margin="0,0,4,0"
-                                                            Command="{Binding DataContext.EditCommand, RelativeSource={RelativeSource AncestorType=TabItem}}"
+                                                            Command="{Binding DataContext.EditCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
                                                             CommandParameter="{Binding}"/>
                                                     <Button Content="✕" Style="{StaticResource DangerButton}" Padding="6,2" FontSize="11"
-                                                            Command="{Binding DataContext.DeleteCommand, RelativeSource={RelativeSource AncestorType=TabItem}}"
+                                                            Command="{Binding DataContext.DeleteCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
                                                             CommandParameter="{Binding}"/>
                                                 </StackPanel>
                                             </DataTemplate>
@@ -193,7 +210,7 @@
                             <TextBox Text="{Binding EditPrice, UpdateSourceTrigger=PropertyChanged}"
                                      Height="34" Padding="8,0" Margin="0,0,0,10" VerticalContentAlignment="Center"/>
                             <TextBlock Text="Reparto *" FontSize="12" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,4"/>
-                            <ComboBox ItemsSource="{Binding Departments}" Height="34"
+                            <ComboBox ItemsSource="{Binding Departments}" Height="34" VerticalAlignment="Center"
                                       SelectedValuePath="Id" SelectedValue="{Binding EditDeptId}"
                                       DisplayMemberPath="Name" Margin="0,0,0,10"/>
                             <TextBlock Text="Ordine" FontSize="12" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,4"/>
@@ -253,13 +270,13 @@
                                             <DataTemplate>
                                                 <StackPanel Orientation="Horizontal">
                                                     <Button Content="✎" Style="{StaticResource PrimaryButton}" Padding="6,2" FontSize="11"
-                                                            Command="{Binding DataContext.EditOperatorCommand, RelativeSource={RelativeSource AncestorType=TabItem}}"
+                                                            Command="{Binding DataContext.EditOperatorCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
                                                             CommandParameter="{Binding}"/>
                                                     <Button Content="🔑" Style="{StaticResource WarnButton}" Padding="6,2" FontSize="11"
-                                                            Command="{Binding DataContext.ResetPasswordCommand, RelativeSource={RelativeSource AncestorType=TabItem}}"
+                                                            Command="{Binding DataContext.ResetPasswordCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
                                                             CommandParameter="{Binding}"/>
                                                     <Button Content="✕" Style="{StaticResource DangerButton}" Padding="6,2" FontSize="11"
-                                                            Command="{Binding DataContext.DeleteOperatorCommand, RelativeSource={RelativeSource AncestorType=TabItem}}"
+                                                            Command="{Binding DataContext.DeleteOperatorCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
                                                             CommandParameter="{Binding}"/>
                                                 </StackPanel>
                                             </DataTemplate>
@@ -285,16 +302,18 @@
                                      Height="34" Padding="8,0" Margin="0,0,0,10" VerticalContentAlignment="Center"/>
                             <TextBlock Text="Ruolo" FontSize="12" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,4"/>
                             <ComboBox ItemsSource="{Binding AvailableRoles}" Height="34"
-                                      SelectedItem="{Binding EditRole}" Margin="0,0,0,10"/>
+                                      SelectedItem="{Binding EditRole}" Margin="0,0,0,10" VerticalAlignment="Center"/>
                             <CheckBox Content="Operatore attivo" IsChecked="{Binding EditIsActive}"
                                       Margin="0,0,0,12" Foreground="{StaticResource TextPrimaryBrush}"/>
                             <TextBlock FontSize="12" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,4"
                                        Text="{Binding IsNewOperator, Converter={StaticResource BoolToPwdLabel}}"/>
                             <PasswordBox x:Name="OpPwdBox" Height="34" Padding="8,0" Margin="0,0,0,10"
+                                         VerticalContentAlignment="Center"
                                          PasswordChanged="OpPwdBox_PasswordChanged"/>
                             <TextBlock Text="Conferma password" FontSize="12"
                                        Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,4"/>
                             <PasswordBox x:Name="OpConfirmPwdBox" Height="34" Padding="8,0" Margin="0,0,0,8"
+                                         VerticalContentAlignment="Center"
                                          PasswordChanged="OpConfirmPwdBox_PasswordChanged"/>
                             <TextBlock Text="{Binding StatusMessage}" FontSize="12"
                                        Foreground="{StaticResource AccentRedBrush}" Margin="0,0,0,8"
@@ -306,138 +325,6 @@
                             </Grid>
                         </StackPanel>
                     </Border>
-                </Grid>
-            </TabItem>
-
-            <!-- ═══ TAB: REPORTISTICA ═════════════════════════════════════ -->
-            <TabItem Header="Reportistica" DataContext="{Binding Report}">
-                <Grid Margin="10">
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="*"/>
-                    </Grid.RowDefinitions>
-
-                    <!-- Filter bar -->
-                    <Border Style="{StaticResource Card}" Margin="0,0,0,10">
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="Dal" VerticalAlignment="Center" FontSize="12" Margin="0,0,8,0"
-                                       Foreground="{StaticResource TextSecondaryBrush}"/>
-                            <DatePicker SelectedDate="{Binding From}" Width="130" Margin="0,0,12,0"/>
-                            <TextBlock Text="Al" VerticalAlignment="Center" FontSize="12" Margin="0,0,8,0"
-                                       Foreground="{StaticResource TextSecondaryBrush}"/>
-                            <DatePicker SelectedDate="{Binding To}" Width="130" Margin="0,0,12,0"/>
-                            <Button Content="Carica" Style="{StaticResource PrimaryButton}" Padding="12,6" Margin="0,0,12,0"
-                                    Command="{Binding LoadCommand}"/>
-                            <Button Content="Oggi" Style="{StaticResource DeptTabButton}" Padding="8,6" Margin="0,0,12,0"
-                                    Command="{Binding SetTodayCommand}"/>
-                            <Button Content="Tutto" Style="{StaticResource DeptTabButton}" Padding="8,6" Margin="0,0,12,0"
-                                    Command="{Binding SetAllTimeCommand}"/>
-                            <Button Content="Esporta CSV" Style="{StaticResource SuccessButton}" Padding="12,6"
-                                    Command="{Binding ExportCsvCommand}"/>
-                        </StackPanel>
-                    </Border>
-
-                    <Grid Grid.Row="1">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="240"/>
-                        </Grid.ColumnDefinitions>
-
-                        <!-- Product report -->
-                        <Border Grid.Column="0" Style="{StaticResource Card}" Padding="0" Margin="0,0,10,0">
-                            <Grid>
-                                <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
-                                <Border Padding="12,9" BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,0,0,0.5">
-                                    <StackPanel Orientation="Horizontal">
-                                        <TextBlock Text="Venduto per articolo" FontSize="13" FontWeight="SemiBold"
-                                                   Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center" Margin="0,0,16,0"/>
-                                        <Border Background="{StaticResource AccentGreenBgBrush}" CornerRadius="8" Padding="8,3">
-                                            <TextBlock FontSize="12" Foreground="{StaticResource AccentGreenBrush}">
-                                                <TextBlock.Text>
-                                                    <MultiBinding StringFormat="{}€ {0:F2} · {1} scontrini">
-                                                        <Binding Path="GrandTotal"/>
-                                                        <Binding Path="TotalSales"/>
-                                                    </MultiBinding>
-                                                </TextBlock.Text>
-                                            </TextBlock>
-                                        </Border>
-                                    </StackPanel>
-                                </Border>
-                                <DataGrid Grid.Row="1" ItemsSource="{Binding ProductRows}" AutoGenerateColumns="False"
-                                          IsReadOnly="True" Background="Transparent" HeadersVisibility="Column">
-                                    <DataGrid.Columns>
-                                        <DataGridTextColumn Header="Reparto" Binding="{Binding Reparto}" Width="110"/>
-                                        <DataGridTextColumn Header="Articolo" Binding="{Binding Articolo}" Width="*"/>
-                                        <DataGridTextColumn Header="Qty" Binding="{Binding Qty}" Width="50"/>
-                                        <DataGridTextColumn Header="Prezzo" Width="70"
-                                                            Binding="{Binding PrezzoUnit, StringFormat='€ {0:F2}'}"/>
-                                        <DataGridTextColumn Header="Totale" Width="80"
-                                                            Binding="{Binding Totale, StringFormat='€ {0:F2}'}"/>
-                                    </DataGrid.Columns>
-                                </DataGrid>
-                            </Grid>
-                        </Border>
-
-                        <!-- Side: dept + payment + shifts -->
-                        <StackPanel Grid.Column="1">
-                            <Border Style="{StaticResource Card}" Padding="0">
-                                <StackPanel>
-                                    <Border Padding="12,8" BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,0,0,0.5">
-                                        <TextBlock Text="Per reparto" FontSize="12" FontWeight="SemiBold"
-                                                   Foreground="{StaticResource TextPrimaryBrush}"/>
-                                    </Border>
-                                    <DataGrid ItemsSource="{Binding DeptRows}" AutoGenerateColumns="False"
-                                              IsReadOnly="True" Background="Transparent" HeadersVisibility="None"
-                                              MaxHeight="200">
-                                        <DataGrid.Columns>
-                                            <DataGridTextColumn Binding="{Binding Reparto}" Width="*"/>
-                                            <DataGridTextColumn Binding="{Binding Qty}" Width="35"/>
-                                            <DataGridTextColumn Width="72"
-                                                                Binding="{Binding Totale, StringFormat='€ {0:F2}'}"/>
-                                        </DataGrid.Columns>
-                                    </DataGrid>
-                                </StackPanel>
-                            </Border>
-
-                            <Border Style="{StaticResource Card}" Padding="0">
-                                <StackPanel>
-                                    <Border Padding="12,8" BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,0,0,0.5">
-                                        <TextBlock Text="Per metodo pagamento" FontSize="12" FontWeight="SemiBold"
-                                                   Foreground="{StaticResource TextPrimaryBrush}"/>
-                                    </Border>
-                                    <DataGrid ItemsSource="{Binding PaymentRows}" AutoGenerateColumns="False"
-                                              IsReadOnly="True" Background="Transparent" HeadersVisibility="None">
-                                        <DataGrid.Columns>
-                                            <DataGridTextColumn Binding="{Binding MetodoPagamento}" Width="*"/>
-                                            <DataGridTextColumn Binding="{Binding NumScontrini}" Width="35"/>
-                                            <DataGridTextColumn Width="72"
-                                                                Binding="{Binding Totale, StringFormat='€ {0:F2}'}"/>
-                                        </DataGrid.Columns>
-                                    </DataGrid>
-                                </StackPanel>
-                            </Border>
-
-                            <Border Style="{StaticResource Card}" Padding="0">
-                                <StackPanel>
-                                    <Border Padding="12,8" BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,0,0,0.5">
-                                        <TextBlock Text="Turni operatori" FontSize="12" FontWeight="SemiBold"
-                                                   Foreground="{StaticResource TextPrimaryBrush}"/>
-                                    </Border>
-                                    <DataGrid ItemsSource="{Binding ShiftRows}" AutoGenerateColumns="False"
-                                              IsReadOnly="True" Background="Transparent" HeadersVisibility="None"
-                                              MaxHeight="160">
-                                        <DataGrid.Columns>
-                                            <DataGridTextColumn Binding="{Binding Operatore}" Width="*"/>
-                                            <DataGridTextColumn Width="55"
-                                                                Binding="{Binding Inizio, StringFormat='{}{0:HH:mm}'}"/>
-                                            <DataGridTextColumn Width="72"
-                                                                Binding="{Binding Totale, StringFormat='€ {0:F2}'}"/>
-                                        </DataGrid.Columns>
-                                    </DataGrid>
-                                </StackPanel>
-                            </Border>
-                        </StackPanel>
-                    </Grid>
                 </Grid>
             </TabItem>
 
@@ -505,7 +392,7 @@
                                                           VerticalAlignment="Center"/>
                                                 <Button Grid.Column="4" Content="✕" Style="{StaticResource DangerButton}"
                                                         Width="26" Height="26" Padding="0" FontSize="11"
-                                                        Command="{Binding DataContext.RemovePaymentMethodCommand, RelativeSource={RelativeSource AncestorType=TabItem}}"
+                                                        Command="{Binding DataContext.RemovePaymentMethodCommand, RelativeSource={RelativeSource AncestorType=Window}}"
                                                         CommandParameter="{Binding}"/>
                                             </Grid>
                                         </DataTemplate>
@@ -529,18 +416,17 @@
                                 <Grid.RowDefinitions>
                                     <RowDefinition Height="40"/><RowDefinition Height="40"/>
                                     <RowDefinition Height="40"/><RowDefinition Height="40"/>
-                                    <RowDefinition Height="40"/>
                                 </Grid.RowDefinitions>
-                                <TextBlock Grid.Row="0" Text="Porta stampante (es. COM3)" VerticalAlignment="Center" Foreground="{StaticResource TextSecondaryBrush}"/>
-                                <TextBox Grid.Row="0" Grid.Column="1" Height="30" Padding="6,0" VerticalContentAlignment="Center" Text="{Binding PrinterPort}"/>
+                                <TextBlock Grid.Row="0" Text="Stampante configurata" VerticalAlignment="Center" Foreground="{StaticResource TextSecondaryBrush}"/>
+                                <ComboBox Grid.Row="0" Grid.Column="1" Height="30" VerticalAlignment="Center"
+                                          ItemsSource="{Binding AvailablePrinters}"
+                                          SelectedItem="{Binding SelectedPrinter}"/>
                                 <TextBlock Grid.Row="1" Text="Stampante abilitata" VerticalAlignment="Center" Foreground="{StaticResource TextSecondaryBrush}"/>
                                 <CheckBox Grid.Row="1" Grid.Column="1" VerticalAlignment="Center" IsChecked="{Binding PrinterEnabled}"/>
                                 <TextBlock Grid.Row="2" Text="Mostra totale nel footer" VerticalAlignment="Center" Foreground="{StaticResource TextSecondaryBrush}"/>
                                 <CheckBox Grid.Row="2" Grid.Column="1" VerticalAlignment="Center" IsChecked="{Binding ShowTotalInFooter}"/>
                                 <TextBlock Grid.Row="3" Text="Modalità kiosk (schermo intero)" VerticalAlignment="Center" Foreground="{StaticResource TextSecondaryBrush}"/>
                                 <CheckBox Grid.Row="3" Grid.Column="1" VerticalAlignment="Center" IsChecked="{Binding KioskMode}"/>
-                                <TextBlock Grid.Row="4" Text="Tema scuro" VerticalAlignment="Center" Foreground="{StaticResource TextSecondaryBrush}"/>
-                                <CheckBox Grid.Row="4" Grid.Column="1" VerticalAlignment="Center" IsChecked="{Binding DarkMode}"/>
                             </Grid>
                         </Border>
                         <StackPanel Orientation="Horizontal" Margin="0,0,0,14">

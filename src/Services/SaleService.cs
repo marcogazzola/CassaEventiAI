@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace CplCassaEventi.Services;
 
-public class SaleService(EventService eventService, AuthService auth)
+public class SaleService(EventService eventService, AuthService auth, ProductService productService)
 {
     private CassaDbContext Db => eventService.Db;
 
@@ -24,6 +24,13 @@ public class SaleService(EventService eventService, AuthService auth)
         var subtotal = list.Sum(i => i.LineTotal);
         var total = subtotal * (1 - discountPct / 100m);
         var change = paymentMethodKey == "cash" ? Math.Max(0, cashGiven - total) : 0;
+        var stockRows = list
+            .GroupBy(i => i.ProductId)
+            .Select(g => (ProductId: g.Key, Quantity: g.Sum(x => x.Quantity)))
+            .ToList();
+
+        if (!productService.TryReserveStock(stockRows, out var stockError))
+            return new SaleResult { Error = stockError ?? "Stock insufficiente." };
 
         var sale = new Sale
         {
@@ -50,9 +57,17 @@ public class SaleService(EventService eventService, AuthService auth)
             }).ToList()
         };
 
-        Db.Sales.Add(sale);
-        await Db.SaveChangesAsync();
-        return new SaleResult { Success = true, SaleId = sale.Id };
+        try
+        {
+            Db.Sales.Add(sale);
+            await Db.SaveChangesAsync();
+            return new SaleResult { Success = true, SaleId = sale.Id };
+        }
+        catch (Exception ex)
+        {
+            productService.RestoreStock(stockRows);
+            return new SaleResult { Error = $"Errore durante il salvataggio vendita: {ex.Message}" };
+        }
     }
 
     public async Task<Sale?> GetSaleByIdAsync(int id)
@@ -66,12 +81,56 @@ public class SaleService(EventService eventService, AuthService auth)
 
     public async Task<bool> VoidSaleAsync(int saleId, string reason)
     {
-        var sale = await Db.Sales.FindAsync(saleId);
+        var sale = await Db.Sales.Include(s => s.Items).FirstOrDefaultAsync(s => s.Id == saleId);
         if (sale == null || sale.IsVoided) return false;
         sale.IsVoided = true;
         sale.VoidReason = reason;
         await Db.SaveChangesAsync();
+        var stockRows = sale.Items
+            .GroupBy(i => i.ProductId)
+            .Select(g => (ProductId: g.Key, Quantity: g.Sum(x => x.Quantity)));
+        productService.RestoreStock(stockRows);
         return true;
+    }
+
+    public async Task<bool> ReactivateSaleAsync(int saleId)
+    {
+        var sale = await Db.Sales.Include(s => s.Items).FirstOrDefaultAsync(s => s.Id == saleId);
+        if (sale == null || !sale.IsVoided) return false;
+
+        var stockRows = sale.Items
+            .GroupBy(i => i.ProductId)
+            .Select(g => (ProductId: g.Key, Quantity: g.Sum(x => x.Quantity)))
+            .ToList();
+
+        if (!productService.TryReserveStock(stockRows, out _))
+            return false;
+
+        sale.IsVoided = false;
+        sale.VoidReason = null;
+        await Db.SaveChangesAsync();
+        return true;
+    }
+
+    public async Task<List<SaleLookupRow>> SearchIssuedSalesAsync(string? query, int limit = 120)
+    {
+        var q = Db.Sales
+            .OrderByDescending(s => s.Id)
+            .AsQueryable();
+
+        if (!string.IsNullOrWhiteSpace(query))
+        {
+            var text = query.Trim();
+            if (int.TryParse(text, out var numericId))
+                q = q.Where(s => s.Id == numericId || EF.Functions.Like(s.OperatorName, $"%{text}%"));
+            else
+                q = q.Where(s => EF.Functions.Like(s.OperatorName, $"%{text}%"));
+        }
+
+        return await q
+            .Take(limit)
+            .Select(s => new SaleLookupRow(s.Id, s.CreatedAt, s.OperatorName, s.Total, s.IsVoided))
+            .ToListAsync();
     }
 
     // ── Session stats ─────────────────────────────────────────────────────

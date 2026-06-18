@@ -10,20 +10,26 @@ public class ReceiptService(ConfigService config)
 {
     public ReceiptConfig GetConfig() => config.LoadReceiptConfig();
 
-    public string BuildTextPreview(Sale sale, List<Department>? filterDepts = null)
+    public string BuildTextPreview(Sale sale, List<Department>? filterDepts = null, List<Department>? allDepartments = null)
     {
         var cfg = config.LoadReceiptConfig();
         var lines = new List<string>();
+        const string PAPER_CUT = "\x1D\x56\x41"; // ESC/POS thermal paper cut command
+
+        // ═════════════════════════════════════════════════════════════
+        // SEZIONE 1: SCONTRINO FISCALE
+        // ═════════════════════════════════════════════════════════════
 
         if (!string.IsNullOrWhiteSpace(cfg.HeaderText))
-        {
             lines.AddRange(cfg.HeaderText.Split('\n').Select(l => l.Trim()));
-            lines.Add(new string('-', 32));
-        }
 
-        lines.Add($"Scontrino #{sale.Id:D4}  {sale.CreatedAt:dd/MM/yy HH:mm}");
-        lines.Add($"Op: {sale.OperatorName}   Pagamento: {sale.PaymentMethodKey}");
-        lines.Add(new string('-', 32));
+        lines.Add(string.Empty);
+        lines.Add($"Scontrino #{sale.Id:D4}   {sale.CreatedAt:dd/MM/yy HH:mm}");
+        lines.Add($"Operatore: {sale.OperatorName}");
+        lines.Add(string.Empty);
+
+        if (cfg.PrintPrices)
+            lines.Add("Q.tà  Articolo         Prezzo    Totale");
 
         var items = filterDepts != null
             ? sale.Items.Where(i => filterDepts.Any(d => d.Id == i.DepartmentId))
@@ -31,33 +37,79 @@ public class ReceiptService(ConfigService config)
 
         foreach (var item in items)
         {
-            var name = item.ProductName.Length > 18 ? item.ProductName[..18] : item.ProductName;
+            var name = item.ProductName.Length > 15 ? item.ProductName[..15] : item.ProductName;
             var line = cfg.PrintPrices
-                ? $"{item.Quantity}x {name}".PadRight(24) + $"{item.LineTotal,8:F2}"
-                : $"{item.Quantity}x {name}";
+                ? $"{item.Quantity,3}  {name,-15} {item.UnitPrice,7:F2}€ {item.LineTotal,7:F2}€"
+                : $"{item.Quantity} {name}";
             lines.Add(line);
         }
 
-        lines.Add(new string('-', 32));
+        lines.Add(string.Empty);
         if (cfg.PrintPrices)
         {
             if (sale.DiscountPct > 0)
-                lines.Add($"Sconto {sale.DiscountPct:F0}%".PadRight(24) +
-                          $"{-sale.Subtotal * sale.DiscountPct / 100,8:F2}");
-            lines.Add($"TOTALE EUR".PadRight(22) + $"{sale.Total,10:F2}");
+                lines.Add($"Sconto {sale.DiscountPct:F0}%                 {-sale.Subtotal * sale.DiscountPct / 100,7:F2}€");
+            
+            lines.Add($"TOTALE EUR                   {sale.Total,7:F2}€");
+            
             if (sale.PaymentMethodKey == "cash")
             {
-                lines.Add($"Pagato".PadRight(24) + $"{sale.CashGiven,8:F2}");
-                lines.Add($"Resto".PadRight(24) + $"{sale.Change,8:F2}");
+                lines.Add($"Pagato                       {sale.CashGiven,7:F2}€");
+                lines.Add($"Resto                        {sale.Change,7:F2}€");
             }
         }
 
+        lines.Add(string.Empty);
         if (!string.IsNullOrWhiteSpace(cfg.FooterText))
-        {
-            lines.Add(new string('-', 32));
             lines.AddRange(cfg.FooterText.Split('\n').Select(l => l.Trim()));
+
+        lines.Add(string.Empty);
+        lines.Add(PAPER_CUT);
+
+        // ═════════════════════════════════════════════════════════════
+        // SEZIONI 2+: SCONTRINI PER REPARTO (solo se abilitato)
+        // ═════════════════════════════════════════════════════════════
+
+        if (cfg.PrintDepartmentSubtotals && allDepartments != null)
+        {
+            var deptGroups = sale.Items
+                .GroupBy(i => new { i.DepartmentId, i.DepartmentName })
+                .OrderBy(g => g.Key.DepartmentName);
+
+            foreach (var deptGroup in deptGroups)
+            {
+                // Controlla se il reparto ha abilitato PrintSeparateReceipt
+                var dept = allDepartments.FirstOrDefault(d => d.Id == deptGroup.Key.DepartmentId);
+                if (dept == null || !dept.PrintSeparateReceipt)
+                    continue;
+
+                lines.Add(string.Empty);
+                if (!string.IsNullOrWhiteSpace(cfg.HeaderText))
+                    lines.AddRange(cfg.HeaderText.Split('\n').Select(l => l.Trim()));
+
+                lines.Add(string.Empty);
+                lines.Add($"Scontrino #{sale.Id:D4}   {sale.CreatedAt:dd/MM/yy HH:mm}");
+                lines.Add($"Operatore: {sale.OperatorName}");
+                lines.Add(string.Empty);
+                lines.Add($"[{deptGroup.Key.DepartmentName}]");
+                lines.Add(string.Empty);
+
+                foreach (var item in deptGroup.OrderBy(i => i.ProductName))
+                {
+                    var name = item.ProductName.Length > 20 ? item.ProductName[..20] : item.ProductName;
+                    lines.Add($"  {item.Quantity} {name}");
+                }
+
+                lines.Add(string.Empty);
+                if (!string.IsNullOrWhiteSpace(cfg.FooterText))
+                    lines.AddRange(cfg.FooterText.Split('\n').Select(l => l.Trim()));
+
+                lines.Add(string.Empty);
+                lines.Add(PAPER_CUT);
+            }
         }
 
         return string.Join(Environment.NewLine, lines);
     }
+
 }

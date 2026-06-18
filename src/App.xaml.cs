@@ -4,13 +4,14 @@ using CplCassaEventi.Services;
 using CplCassaEventi.ViewModels;
 using CplCassaEventi.Views.BackOffice;
 using CplCassaEventi.Views.FrontOffice;
+using CplCassaEventi.Views.Reports;
 using CplCassaEventi.Views.Shared;
 using Microsoft.Extensions.DependencyInjection;
 using System.Windows;
 
 namespace CplCassaEventi;
 
-public partial class App : Application
+public partial class App : System.Windows.Application
 {
     public static IServiceProvider Services { get; private set; } = null!;
     public static AppSettings CurrentSettings { get; set; } = new();
@@ -23,7 +24,7 @@ public partial class App : Application
         Services = services.BuildServiceProvider();
 
         CurrentSettings = Services.GetRequiredService<ConfigService>().LoadAppSettings();
-        ApplyTheme(CurrentSettings.DarkMode);
+        ApplyTheme();
 
         Services.GetRequiredService<BackupService>().Start();
 
@@ -62,19 +63,17 @@ public partial class App : Application
         s.AddTransient<LoginWindow>();
         s.AddTransient<MainWindow>();
         s.AddTransient<BackOfficeWindow>();
+        s.AddTransient<ReportWindow>();
     }
 
-    public static void ApplyTheme(bool dark)
+    public static void ApplyTheme()
     {
-        var uri = new Uri(dark
-            ? "pack://application:,,,/Resources/Themes/DarkTheme.xaml"
-            : "pack://application:,,,/Resources/Themes/LightTheme.xaml");
+        var uri = new Uri("pack://application:,,,/Resources/Themes/LightTheme.xaml");
         var dict = new ResourceDictionary { Source = uri };
         var existing = Current.Resources.MergedDictionaries
             .FirstOrDefault(d => d.Source?.OriginalString.Contains("Theme") == true);
         if (existing != null) Current.Resources.MergedDictionaries.Remove(existing);
         Current.Resources.MergedDictionaries.Add(dict);
-        CurrentSettings.DarkMode = dark;
     }
 
     protected override void OnExit(ExitEventArgs e)

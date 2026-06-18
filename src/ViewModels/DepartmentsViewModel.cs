@@ -28,7 +28,7 @@ public partial class DepartmentsViewModel(ProductService products) : BaseViewMod
 
     [RelayCommand] private void Edit(Department d)
     {
-        Selected = d; EditName = d.Name; EditColor = d.Color;
+        Selected = d; EditName = d.Name; EditColor = string.IsNullOrWhiteSpace(d.Color) ? "#378ADD" : d.Color;
         EditIsActive = d.IsActive; EditPrintSeparate = d.PrintSeparateReceipt;
         EditSortOrder = d.SortOrder; IsNew = false; IsEditing = true;
     }
@@ -39,7 +39,7 @@ public partial class DepartmentsViewModel(ProductService products) : BaseViewMod
     {
         if (string.IsNullOrWhiteSpace(EditName)) { StatusMessage = "Nome obbligatorio."; return; }
         var d = IsNew ? new Department() : (Selected ?? new Department());
-        d.Name = EditName.Trim(); d.Color = EditColor;
+        d.Name = EditName.Trim(); d.Color = string.IsNullOrWhiteSpace(EditColor) ? "#378ADD" : EditColor.Trim();
         d.IsActive = EditIsActive; d.PrintSeparateReceipt = EditPrintSeparate; d.SortOrder = EditSortOrder;
         products.SaveDepartment(d);
         Load(); IsEditing = false; StatusMessage = $"Reparto '{d.Name}' salvato.";

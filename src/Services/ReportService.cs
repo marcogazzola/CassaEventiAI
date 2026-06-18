@@ -1,81 +1,95 @@
 using CplCassaEventi.Data;
 using CplCassaEventi.Models;
-using CsvHelper;
+using ClosedXML.Excel;
 using Microsoft.EntityFrameworkCore;
-using System.Globalization;
-using System.IO;
 
 namespace CplCassaEventi.Services;
 
-public record ProductReportRow(string Reparto, string Articolo, int Qty, decimal PrezzoUnit, decimal Totale);
-public record DeptReportRow(string Reparto, int Qty, decimal Totale);
-public record PaymentReportRow(string MetodoPagamento, int NumScontrini, decimal Totale);
-public record ShiftReportRow(string Operatore, DateTime Inizio, DateTime? Fine, int Scontrini, decimal Totale);
+public record DailyCashReport(
+    DateTime Date,
+    int IssuedReceipts,
+    int VoidedReceipts,
+    decimal TotalSold,
+    List<DailyProductSalesRow> Products);
 
 public class ReportService(EventService eventService)
 {
     private CassaDbContext Db => eventService.Db;
 
-    public async Task<List<ProductReportRow>> GetProductReportAsync(DateTime? from = null, DateTime? to = null)
+    public async Task<DailyCashReport> GetDailyCashReportAsync(DateTime startDate, DateTime endDate)
     {
-        var q = Db.SaleItems.Include(i => i.Sale).Where(i => !i.Sale!.IsVoided);
-        if (from.HasValue) q = q.Where(i => i.Sale!.CreatedAt >= from);
-        if (to.HasValue)   q = q.Where(i => i.Sale!.CreatedAt <= to);
-        return await q
-            .GroupBy(i => new { i.DepartmentName, i.ProductName, i.UnitPrice })
-            .ToListAsync()
-            .ContinueWith(t => t.Result.OrderBy(g => g.Key.DepartmentName)
-            .ThenBy(g => g.Key.ProductName)
-            .Select(g => new ProductReportRow(g.Key.DepartmentName, g.Key.ProductName,
-                g.Sum(i => i.Quantity), g.Key.UnitPrice, g.Sum(i => i.LineTotal)))
-            .ToList());
-
-    }
-
-    public async Task<List<DeptReportRow>> GetDeptReportAsync(DateTime? from = null, DateTime? to = null)
-    {
-        var q = Db.SaleItems.Include(i => i.Sale).Where(i => !i.Sale!.IsVoided);
-        if (from.HasValue) q = q.Where(i => i.Sale!.CreatedAt >= from);
-        if (to.HasValue)   q = q.Where(i => i.Sale!.CreatedAt <= to);
-        return await q
-            .GroupBy(i => i.DepartmentName)
-            .Select(g => new DeptReportRow(g.Key, g.Sum(i => i.Quantity), g.Sum(i => i.LineTotal)))
-            .ToListAsync()
-            .ContinueWith(t => t.Result.OrderByDescending(r => r.Totale).ToList());
-    }
-
-    public async Task<List<PaymentReportRow>> GetPaymentReportAsync(DateTime? from = null, DateTime? to = null)
-    {
-        var q = Db.Sales.Where(s => !s.IsVoided);
-        if (from.HasValue) q = q.Where(s => s.CreatedAt >= from);
-        if (to.HasValue)   q = q.Where(s => s.CreatedAt <= to);
-        return await q
-            .GroupBy(s => s.PaymentMethodLabel)
-            .Select(g => new PaymentReportRow(g.Key, g.Count(), g.Sum(s => s.Total)))
+        var sales = await Db.Sales
+            .Include(s => s.Items)
+            .Where(s => s.CreatedAt >= startDate && s.CreatedAt <= endDate)
             .ToListAsync();
+
+        var activeSales = sales.Where(s => !s.IsVoided).ToList();
+        var products = activeSales
+            .SelectMany(s => s.Items)
+            .GroupBy(i => i.ProductName)
+            .OrderBy(g => g.Key)
+            .Select(g => new DailyProductSalesRow(
+                g.Key,
+                g.Sum(x => x.Quantity),
+                g.Sum(x => x.LineTotal)))
+            .ToList();
+
+        return new DailyCashReport(
+            startDate,
+            sales.Count,
+            sales.Count(s => s.IsVoided),
+            activeSales.Sum(s => s.Total),
+            products);
     }
 
-    public async Task<List<ShiftReportRow>> GetShiftReportAsync()
-        => await Db.OperatorShifts
-            .Select(s => new ShiftReportRow(s.OperatorName, s.StartedAt, s.ClosedAt, s.SalesCount, s.TotalAmount))
+    public async Task<List<DailyOrderRow>> GetDailyOrdersAsync(DateTime startDate, DateTime endDate)
+    {
+        return await Db.Sales
+            .Where(s => s.CreatedAt >= startDate && s.CreatedAt <= endDate)
+            .OrderByDescending(s => s.Id)
+            .Select(s => new DailyOrderRow(
+                s.Id,
+                s.CreatedAt,
+                s.OperatorName,
+                s.PaymentMethodLabel,
+                s.Total,
+                s.IsVoided))
             .ToListAsync()
-            .ContinueWith(t => t.Result.OrderByDescending(s => s.Inizio).ToList());
-
-    public async Task<(int Count, decimal Total)> GetTotalsAsync(DateTime? from = null, DateTime? to = null)
-    {
-        var q = Db.Sales.Where(s => !s.IsVoided);
-        if (from.HasValue) q = q.Where(s => s.CreatedAt >= from);
-        if (to.HasValue)   q = q.Where(s => s.CreatedAt <= to);
-        var count = await q.CountAsync();
-        var total = count > 0 ? await q.SumAsync(s => s.Total) : 0;
-        return (count, total);
+            .ContinueWith(t => t.Result.OrderByDescending(o => o.SaleId).ToList());
     }
 
-    public async Task ExportProductCsvAsync(string filePath, DateTime? from = null, DateTime? to = null)
+    public async Task ExportDailyCashExcelAsync(string filePath, DailyCashReport report)
     {
-        var rows = await GetProductReportAsync(from, to);
-        await using var writer = new StreamWriter(filePath, false, System.Text.Encoding.UTF8);
-        await using var csv = new CsvWriter(writer, CultureInfo.InvariantCulture);
-        await csv.WriteRecordsAsync(rows);
+        using var workbook = new XLWorkbook();
+        var ws = workbook.Worksheets.Add("Incasso");
+
+        ws.Cell(1, 1).Value = "Data";
+        ws.Cell(1, 2).Value = report.Date.ToString("dd/MM/yyyy");
+        ws.Cell(2, 1).Value = "Scontrini emessi";
+        ws.Cell(2, 2).Value = report.IssuedReceipts;
+        ws.Cell(3, 1).Value = "Scontrini annullati";
+        ws.Cell(3, 2).Value = report.VoidedReceipts;
+        ws.Cell(4, 1).Value = "Totale venduto";
+        ws.Cell(4, 2).Value = report.TotalSold;
+        ws.Cell(4, 2).Style.NumberFormat.Format = "€ #,##0.00";
+
+        ws.Cell(6, 1).Value = "Prodotto";
+        ws.Cell(6, 2).Value = "Quantità";
+        ws.Cell(6, 3).Value = "Importo totale";
+        ws.Range(6, 1, 6, 3).Style.Font.Bold = true;
+
+        var row = 7;
+        foreach (var product in report.Products)
+        {
+            ws.Cell(row, 1).Value = product.ProductName;
+            ws.Cell(row, 2).Value = product.Quantity;
+            ws.Cell(row, 3).Value = product.TotalAmount;
+            ws.Cell(row, 3).Style.NumberFormat.Format = "€ #,##0.00";
+            row++;
+        }
+
+        ws.Columns().AdjustToContents();
+        workbook.SaveAs(filePath);
+        await Task.CompletedTask;
     }
 }

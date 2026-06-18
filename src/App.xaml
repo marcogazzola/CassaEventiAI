@@ -17,6 +17,11 @@
             <conv:BoolToFirstRunLabelConverter x:Key="BoolToFirstRunLabel"/>
             <conv:BoolToNewEditLabelConverter x:Key="BoolToNewEditLabel"/>
             <conv:BoolToPwdLabelConverter x:Key="BoolToPwdLabel"/>
+            <conv:HexToBrushConverter x:Key="HexBrush"/>
+            <conv:HexToReadableForegroundConverter x:Key="HexForeground"/>
+            <conv:EqualityMultiConverter x:Key="Equality"/>
+            <conv:BoolToVoidLabelConverter x:Key="BoolToVoidLabel"/>
+            <conv:BoolToVoidStyleConverter x:Key="BoolToVoidStyle"/>
         </ResourceDictionary>
     </Application.Resources>
 </Application>

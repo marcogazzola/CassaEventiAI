@@ -2,7 +2,7 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:conv="clr-namespace:CplCassaEventi.Converters"
-        Title="CPL Cassa" WindowState="Maximized" MinWidth="1024" MinHeight="700">
+        Title="Cassa per Sagra" WindowState="Maximized" MinWidth="1100" MinHeight="700">
     <Window.Resources>
         <conv:BoolToVisibilityConverter x:Key="BoolToVis"/>
         <conv:NullToCollapsedConverter x:Key="NullToCollapsed"/>
@@ -12,28 +12,29 @@
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="52"/>
-            <RowDefinition Height="46"/>
             <RowDefinition Height="*"/>
             <RowDefinition Height="50"/>
         </Grid.RowDefinitions>
 
-        <!-- Top bar -->
         <Border Grid.Row="0" Background="{StaticResource BgPrimaryBrush}"
                 BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,0,0,0.5">
             <Grid Margin="14,0">
-                <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                    <TextBlock Text="CPL Cassa" FontSize="17" FontWeight="Bold"
+                    <TextBlock Text="Cassa per Sagra" FontSize="17" FontWeight="Bold"
                                Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center"/>
                     <TextBlock Text="{Binding Source={x:Static Application.Current}, Path=CurrentSettings.ActiveEventName}"
                                FontSize="13" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="14,0,0,0"/>
                 </StackPanel>
                 <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-                    <Button Content="⟳ Ristampa" Style="{StaticResource DeptTabButton}"
+                    <Button Content="⟳ Ristampa ultimo scontrino" Style="{StaticResource WarnButton}" Padding="10,5" Margin="0,0,4,0"
                             Command="{Binding ReprintLastCommand}"/>
-                    <Button Content="✕ Storno" Style="{StaticResource DeptTabButton}"
+                    <Button Content="↩ Storno" Style="{StaticResource WarnButton}" Padding="10,5" Margin="0,0,4,0"
                             Command="{Binding OpenVoidPanelCommand}"/>
-                    <Button Content="⚙ BackOffice" Style="{StaticResource WarnButton}" Padding="10,5"
+                    <Button Content="⚙ Settings" Style="{StaticResource WarnButton}" Padding="10,5" Margin="0,0,4,0"
                             Click="OpenBackOffice_Click"/>
                     <Button Content="Chiudi turno" Style="{StaticResource DangerButton}" Padding="10,5"
                             Command="{Binding CloseShiftCommand}"/>
@@ -41,62 +42,61 @@
             </Grid>
         </Border>
 
-        <!-- Dept tabs -->
-        <Border Grid.Row="1" Background="{StaticResource BgPrimaryBrush}"
-                BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,0,0,0.5">
-            <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
-                <StackPanel Orientation="Horizontal" Margin="10,6">
-                    <Button Content="Tutti" Style="{StaticResource DeptTabButton}" Margin="0,0,6,0"
-                            Command="{Binding ClearDeptFilterCommand}"/>
-                    <ItemsControl ItemsSource="{Binding Departments}">
-                        <ItemsControl.ItemsPanel>
-                            <ItemsPanelTemplate><StackPanel Orientation="Horizontal"/></ItemsPanelTemplate>
-                        </ItemsControl.ItemsPanel>
-                        <ItemsControl.ItemTemplate>
-                            <DataTemplate>
-                                <Button Content="{Binding Name}" Style="{StaticResource DeptTabButton}"
-                                        Command="{Binding DataContext.SelectDeptCommand, RelativeSource={RelativeSource AncestorType=Window}}"
-                                        CommandParameter="{Binding}"/>
-                            </DataTemplate>
-                        </ItemsControl.ItemTemplate>
-                    </ItemsControl>
-                </StackPanel>
-            </ScrollViewer>
-        </Border>
-
-        <!-- Main area -->
-        <Grid Grid.Row="2" Margin="10">
+        <Grid Grid.Row="1" Margin="10">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*" MinWidth="280"/>
-                <ColumnDefinition Width="330"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="340"/>
             </Grid.ColumnDefinitions>
 
-            <!-- Product grid -->
             <ScrollViewer Grid.Column="0" VerticalScrollBarVisibility="Auto" Margin="0,0,10,0">
-                <ItemsControl ItemsSource="{Binding FilteredProducts}">
-                    <ItemsControl.ItemsPanel>
-                        <ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate>
-                    </ItemsControl.ItemsPanel>
+                <ItemsControl ItemsSource="{Binding GroupedProducts}">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
-                            <Button Width="110" Height="76" Margin="4" Style="{StaticResource ProductButton}"
-                                    Command="{Binding DataContext.AddProductCommand, RelativeSource={RelativeSource AncestorType=Window}}"
-                                    CommandParameter="{Binding}">
+                            <Border Style="{StaticResource Card}" Margin="0,0,0,10" Padding="12">
                                 <StackPanel>
-                                    <TextBlock Text="{Binding Name}" FontSize="13" FontWeight="SemiBold"
-                                               TextWrapping="Wrap" TextAlignment="Center"
-                                               Foreground="{StaticResource TextPrimaryBrush}"/>
-                                    <TextBlock Text="{Binding Price, Converter={StaticResource Euro}}"
-                                               FontSize="12" Foreground="{StaticResource TextSecondaryBrush}"
-                                               TextAlignment="Center" Margin="0,3,0,0"/>
+                                    <Border CornerRadius="8" Padding="8,4" Margin="0,0,0,8"
+                                            Background="{Binding DepartmentColor, Converter={StaticResource HexBrush}, ConverterParameter=#378ADD}">
+                                        <TextBlock Text="{Binding DepartmentName}" FontSize="14" FontWeight="SemiBold"
+                                                   Foreground="{Binding DepartmentColor, Converter={StaticResource HexForeground}, ConverterParameter=#378ADD}"/>
+                                    </Border>
+                                    <ItemsControl ItemsSource="{Binding Products}">
+                                        <ItemsControl.ItemsPanel>
+                                            <ItemsPanelTemplate>
+                                                <WrapPanel/>
+                                            </ItemsPanelTemplate>
+                                        </ItemsControl.ItemsPanel>
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <Button Width="110" Height="76" Margin="4" Style="{StaticResource ProductButton}"
+                                                        Command="{Binding DataContext.AddProductCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                        CommandParameter="{Binding}"
+                                                        Tag="{Binding DataContext.DepartmentColor, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                        Background="{Binding Tag, RelativeSource={RelativeSource Self}, Converter={StaticResource HexBrush}, ConverterParameter=#1F2937}"
+                                                        BorderBrush="{Binding Tag, RelativeSource={RelativeSource Self}, Converter={StaticResource HexBrush}, ConverterParameter=#4B5563}"
+                                                        Foreground="{Binding Tag, RelativeSource={RelativeSource Self}, Converter={StaticResource HexForeground}, ConverterParameter=#1F2937}">
+                                                    <StackPanel>
+                                                        <TextBlock Text="{Binding Name}" FontSize="13" FontWeight="SemiBold"
+                                                                   TextWrapping="Wrap" TextAlignment="Center"
+                                                                   Foreground="{Binding Tag, RelativeSource={RelativeSource AncestorType=Button}, Converter={StaticResource HexForeground}, ConverterParameter=#1F2937}"/>
+                                                        <TextBlock Text="{Binding Price, Converter={StaticResource Euro}}"
+                                                                   FontSize="12" TextAlignment="Center" Margin="0,3,0,0"
+                                                                   Foreground="{Binding Tag, RelativeSource={RelativeSource AncestorType=Button}, Converter={StaticResource HexForeground}, ConverterParameter=#1F2937}"/>
+                                                        <TextBlock Text="{Binding StockQty, StringFormat='Stock: {0}'}"
+                                                                   FontSize="9" TextAlignment="Center" Margin="0,2,0,0"
+                                                                   Foreground="{Binding Tag, RelativeSource={RelativeSource AncestorType=Button}, Converter={StaticResource HexForeground}, ConverterParameter=#1F2937}"
+                                                                   Visibility="{Binding TrackStock, Converter={StaticResource BoolToVis}}"/>
+                                                    </StackPanel>
+                                                </Button>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
                                 </StackPanel>
-                            </Button>
+                            </Border>
                         </DataTemplate>
                     </ItemsControl.ItemTemplate>
                 </ItemsControl>
             </ScrollViewer>
 
-            <!-- Cart panel -->
             <Border Grid.Column="1" Style="{StaticResource Card}" Padding="0">
                 <Grid>
                     <Grid.RowDefinitions>
@@ -108,8 +108,14 @@
                     <Border Grid.Row="0" Padding="12,9"
                             BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,0,0,0.5">
                         <Grid>
-                            <TextBlock Text="Scontrino" FontSize="14" FontWeight="SemiBold"
-                                       Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center"/>
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="Scontrino" FontSize="14" FontWeight="SemiBold"
+                                           Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center"/>
+                                <Border Background="{StaticResource AccentBlueBgBrush}" CornerRadius="10" Padding="7,2" Margin="8,0,0,0">
+                                    <TextBlock Text="{Binding CartQuantityCount}" FontSize="11" FontWeight="SemiBold"
+                                               Foreground="{StaticResource AccentBlueBrush}"/>
+                                </Border>
+                            </StackPanel>
                             <Button Content="Svuota" HorizontalAlignment="Right"
                                     Style="{StaticResource DangerButton}" Padding="8,3" FontSize="11"
                                     Command="{Binding ClearCartCommand}"/>
@@ -158,31 +164,52 @@
                     </ScrollViewer>
 
                     <StackPanel Grid.Row="2" Margin="10,8">
-                        <!-- Sconto -->
                         <Grid Margin="0,0,0,8">
-                            <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="72"/></Grid.ColumnDefinitions>
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="82"/></Grid.ColumnDefinitions>
                             <TextBlock Text="Sconto %" VerticalAlignment="Center"
                                        Foreground="{StaticResource TextSecondaryBrush}" FontSize="12"/>
-                            <TextBox Grid.Column="1" Height="30" Padding="6,0" VerticalContentAlignment="Center"
-                                     Text="{Binding DiscountPct, UpdateSourceTrigger=PropertyChanged}"/>
+                            <Border Grid.Column="1" CornerRadius="8" BorderThickness="0.5" BorderBrush="{StaticResource BorderBrush}">
+                                <TextBox Height="30" Padding="6,0" VerticalContentAlignment="Center"
+                                         BorderThickness="0"
+                                         PreviewTextInput="NumericTextBox_PreviewTextInput"
+                                         DataObject.Pasting="NumericTextBox_Pasting"
+                                         Text="{Binding DiscountPct, UpdateSourceTrigger=PropertyChanged}"/>
+                            </Border>
                         </Grid>
 
-                        <!-- Metodi pagamento -->
                         <ItemsControl ItemsSource="{Binding PaymentMethods}" Margin="0,0,0,8">
                             <ItemsControl.ItemsPanel>
-                                <ItemsPanelTemplate><UniformGrid Rows="1"/></ItemsPanelTemplate>
+                                <ItemsPanelTemplate><UniformGrid Columns="3"/></ItemsPanelTemplate>
                             </ItemsControl.ItemsPanel>
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
-                                    <Button Content="{Binding Label}" Height="32" Margin="2,0"
-                                            Style="{StaticResource DeptTabButton}" FontSize="12"
+                                    <Button Height="32" Margin="2,0" FontSize="12"
                                             Command="{Binding DataContext.SelectPaymentCommand, RelativeSource={RelativeSource AncestorType=Window}}"
-                                            CommandParameter="{Binding}"/>
+                                            CommandParameter="{Binding}">
+                                        <Button.Tag>
+                                            <MultiBinding Converter="{StaticResource Equality}">
+                                                <Binding/>
+                                                <Binding Path="DataContext.SelectedPaymentMethod" RelativeSource="{RelativeSource AncestorType=Window}"/>
+                                            </MultiBinding>
+                                        </Button.Tag>
+                                        <Button.Style>
+                                            <Style TargetType="Button" BasedOn="{StaticResource DeptTabButton}">
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding Tag, RelativeSource={RelativeSource Self}}" Value="True">
+                                                        <Setter Property="Background" Value="{StaticResource AccentGreenBgBrush}"/>
+                                                        <Setter Property="BorderBrush" Value="{StaticResource AccentGreenBrush}"/>
+                                                        <Setter Property="Foreground" Value="{StaticResource AccentGreenBrush}"/>
+                                                        <Setter Property="FontWeight" Value="SemiBold"/>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Button.Style>
+                                        <TextBlock Text="{Binding Label}" HorizontalAlignment="Center"/>
+                                    </Button>
                                 </DataTemplate>
                             </ItemsControl.ItemTemplate>
                         </ItemsControl>
 
-                        <!-- Totale -->
                         <Border Background="{StaticResource AccentBlueBgBrush}" CornerRadius="8"
                                 Padding="12,9" Margin="0,0,0,8">
                             <Grid>
@@ -194,7 +221,6 @@
                             </Grid>
                         </Border>
 
-                        <!-- Contanti + resto -->
                         <Border Background="{StaticResource BgSecondaryBrush}" CornerRadius="8"
                                 Padding="10,8" Margin="0,0,0,8"
                                 Visibility="{Binding ShowCashInput, Converter={StaticResource BoolToVis}}">
@@ -204,6 +230,8 @@
                                     <TextBlock Text="Contanti ricevuti" FontSize="12"
                                                Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center"/>
                                     <TextBox Grid.Column="1" Height="30" Padding="6,0" VerticalContentAlignment="Center"
+                                             PreviewTextInput="NumericTextBox_PreviewTextInput"
+                                             DataObject.Pasting="NumericTextBox_Pasting"
                                              Text="{Binding CashGiven, UpdateSourceTrigger=PropertyChanged}"/>
                                 </Grid>
                                 <Grid>
@@ -216,23 +244,17 @@
                             </StackPanel>
                         </Border>
 
-                        <!-- Azioni -->
-                        <Grid>
-                            <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="8"/><ColumnDefinition Width="48"/></Grid.ColumnDefinitions>
-                            <Button Grid.Column="0" Content="✓ Incassa e stampa"
-                                    Style="{StaticResource SuccessButton}" Height="46" FontSize="15"
-                                    Command="{Binding CheckoutCommand}"/>
-                            <Button Grid.Column="2" Content="✕" Height="46"
-                                    Style="{StaticResource DangerButton}" FontSize="18"
-                                    Command="{Binding ClearCartCommand}"/>
-                        </Grid>
+                        <Button Content="Anteprima scontrino" Style="{StaticResource DeptTabButton}" Height="38" Margin="0,0,0,8"
+                                Command="{Binding PreviewCurrentReceiptCommand}"/>
+                        <Button Content="✓ Incassa e stampa"
+                                Style="{StaticResource SuccessButton}" Height="46" FontSize="15"
+                                Command="{Binding CheckoutCommand}"/>
                     </StackPanel>
                 </Grid>
             </Border>
         </Grid>
 
-        <!-- Footer stats -->
-        <Border Grid.Row="3" Background="{StaticResource BgPrimaryBrush}"
+        <Border Grid.Row="2" Background="{StaticResource BgPrimaryBrush}"
                 BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,0.5,0,0">
             <Grid Margin="18,0">
                 <Grid.ColumnDefinitions>
@@ -241,61 +263,113 @@
                     <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="1"/>
                     <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="1"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="1"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="1"/>
                     <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="1"/>
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
 
-                <StackPanel Grid.Column="0" Margin="0,7">
+                <Button Grid.Column="0" Content="📊 Reportistica" Style="{StaticResource WarnButton}" Margin="16,7" VerticalAlignment="Center"
+                        Click="OpenReports_Click"/>
+                <Rectangle Grid.Column="1" Fill="{StaticResource BorderBrush}" Width="0.5" Margin="0,8"
+                           Visibility="{Binding ShowTotalInFooter, Converter={StaticResource BoolToVis}}"/>
+                <StackPanel Grid.Column="2" Margin="16,7">
                     <TextBlock Text="{Binding SalesCount}" Style="{StaticResource FooterStatValue}"/>
                     <TextBlock Text="Scontrini" Style="{StaticResource FooterStatLabel}"/>
                 </StackPanel>
-                <Rectangle Grid.Column="1" Fill="{StaticResource BorderBrush}" Width="0.5" Margin="16,8"/>
-                <StackPanel Grid.Column="2" Margin="16,7"
+                <Rectangle Grid.Column="3" Fill="{StaticResource BorderBrush}" Width="0.5" Margin="0,8"
+                           Visibility="{Binding ShowTotalInFooter, Converter={StaticResource BoolToVis}}"/>
+                <StackPanel Grid.Column="4" Margin="16,7"
                             Visibility="{Binding ShowTotalInFooter, Converter={StaticResource BoolToVis}}">
                     <TextBlock Text="{Binding TotalIncassato, Converter={StaticResource Euro}}"
                                Style="{StaticResource FooterStatValue}"
                                Foreground="{StaticResource AccentGreenBrush}"/>
                     <TextBlock Text="Totale incassato" Style="{StaticResource FooterStatLabel}"/>
                 </StackPanel>
-                <Rectangle Grid.Column="3" Fill="{StaticResource BorderBrush}" Width="0.5" Margin="0,8"
+                <Rectangle Grid.Column="5" Fill="{StaticResource BorderBrush}" Width="0.5" Margin="0,8"
                            Visibility="{Binding ShowTotalInFooter, Converter={StaticResource BoolToVis}}"/>
-                <StackPanel Grid.Column="4" Margin="16,7">
+                <StackPanel Grid.Column="6" Margin="16,7">
                     <TextBlock Text="{Binding LastOrderAmount, Converter={StaticResource Euro}}"
                                Style="{StaticResource FooterStatValue}"/>
                     <TextBlock Text="Ultimo ordine" Style="{StaticResource FooterStatLabel}"/>
                 </StackPanel>
-                <TextBlock Grid.Column="6" VerticalAlignment="Center" FontSize="12"
+                <Rectangle Grid.Column="7" Fill="{StaticResource BorderBrush}" Width="0.5" Margin="0,8"
+                           Visibility="{Binding ShowTotalInFooter, Converter={StaticResource BoolToVis}}"/>
+                <StackPanel Grid.Column="8" Margin="16,7">
+                    <TextBlock  Text="{Binding ToolbarDateTime}" VerticalAlignment="Center" HorizontalAlignment="Center"
+                           FontSize="13" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
+                       </StackPanel>
+                       <Rectangle Grid.Column="9" Fill="{StaticResource BorderBrush}" Width="0.5" Margin="16,8"/>
+                <TextBlock Grid.Column="10" VerticalAlignment="Center" FontSize="12"
                            Foreground="{StaticResource TextMutedBrush}" Text="{Binding StatusMessage}"/>
+
             </Grid>
         </Border>
 
-        <!-- Void overlay -->
-        <Grid Grid.Row="0" Grid.RowSpan="4" Background="#80000000"
+        <Grid Grid.Row="0" Grid.RowSpan="3" Background="#80000000"
               Visibility="{Binding VoidPanelVisible, Converter={StaticResource BoolToVis}}">
-            <Border Style="{StaticResource Card}" MaxWidth="400" MaxHeight="280"
+            <Border Style="{StaticResource Card}" Width="620" MaxHeight="560"
                     VerticalAlignment="Center" HorizontalAlignment="Center">
-                <StackPanel>
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
                     <TextBlock Text="Storno scontrino" FontSize="16" FontWeight="SemiBold"
-                               Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,16"/>
+                               Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,12"/>
 
-                    <TextBlock Text="Numero scontrino" FontSize="12"
-                               Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,4"/>
-                    <TextBox Text="{Binding VoidSaleIdText, UpdateSourceTrigger=PropertyChanged}"
-                             Height="36" Padding="8,0" Margin="0,0,0,10" VerticalContentAlignment="Center"/>
-
-                    <TextBlock Text="Motivo storno" FontSize="12"
-                               Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,4"/>
-                    <TextBox Text="{Binding VoidReason, UpdateSourceTrigger=PropertyChanged}"
-                             Height="36" Padding="8,0" Margin="0,0,0,16" VerticalContentAlignment="Center"/>
-
-                    <Grid>
-                        <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="8"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
-                        <Button Grid.Column="0" Content="Annulla scontrino" Style="{StaticResource DangerButton}"
-                                Height="40" Command="{Binding ConfirmVoidCommand}"/>
-                        <Button Grid.Column="2" Content="Chiudi" Style="{StaticResource DeptTabButton}"
-                                Height="40" Command="{Binding CloseVoidPanelCommand}"/>
+                    <Grid Grid.Row="1" Margin="0,0,0,10">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="8"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBox Grid.Column="0"
+                                 Height="34" Padding="8,0" VerticalContentAlignment="Center"
+                                 Text="{Binding VoidSearchText, UpdateSourceTrigger=PropertyChanged}"/>
+                        <Button Grid.Column="2" Content="Cerca" Style="{StaticResource PrimaryButton}" Padding="12,6"
+                                Command="{Binding SearchVoidSalesCommand}"/>
                     </Grid>
-                </StackPanel>
+
+                    <DataGrid Grid.Row="2"
+                              ItemsSource="{Binding VoidSearchResults}"
+                              SelectedItem="{Binding SelectedVoidSale}"
+                              AutoGenerateColumns="False"
+                              IsReadOnly="True"
+                              Background="Transparent">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Scontrino" Binding="{Binding SaleId}" Width="80"/>
+                            <DataGridTextColumn Header="Data/Ora" Width="140"
+                                                Binding="{Binding CreatedAt, StringFormat='{}{0:dd/MM/yyyy HH:mm}'}"/>
+                            <DataGridTextColumn Header="Operatore" Binding="{Binding OperatorName}" Width="*"/>
+                            <DataGridTextColumn Header="Totale" Width="90"
+                                                Binding="{Binding Total, StringFormat='€ {0:F2}'}"/>
+                            <DataGridCheckBoxColumn Header="Stornato" Binding="{Binding IsVoided, Mode=OneWay}" Width="80"/>
+                        </DataGrid.Columns>
+                    </DataGrid>
+
+                    <StackPanel Grid.Row="3" Margin="0,12,0,0">
+                        <TextBlock Text="Motivo" FontSize="12"
+                                   Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,4"/>
+                        <TextBox Text="{Binding VoidReason, UpdateSourceTrigger=PropertyChanged}"
+                                 Height="34" Padding="8,0" Margin="0,0,0,10" VerticalContentAlignment="Center"/>
+                        <Grid>
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="8"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                            <Button Grid.Column="0" Content="{Binding SelectedVoidSale.IsVoided, Converter={StaticResource BoolToVoidLabel}}" 
+                                    Style="{Binding SelectedVoidSale.IsVoided, Converter={StaticResource BoolToVoidStyle}}"
+                                    Height="40" Command="{Binding ConfirmVoidCommand}"/>
+                            <Button Grid.Column="2" Content="Chiudi" Style="{StaticResource DeptTabButton}"
+                                    Height="40" Command="{Binding CloseVoidPanelCommand}"/>
+                        </Grid>
+                    </StackPanel>
+                </Grid>
             </Border>
         </Grid>
     </Grid>
