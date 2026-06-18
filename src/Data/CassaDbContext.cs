@@ -1,7 +1,7 @@
-using CplCassaEventi.Models;
+using CassaEventiAI.Models;
 using Microsoft.EntityFrameworkCore;
 
-namespace CplCassaEventi.Data;
+namespace CassaEventiAI.Data;
 
 public class CassaDbContext : DbContext
 {

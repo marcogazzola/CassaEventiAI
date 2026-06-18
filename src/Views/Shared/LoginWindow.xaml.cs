@@ -1,10 +1,10 @@
-using CplCassaEventi.ViewModels;
-using CplCassaEventi.Views.FrontOffice;
+using CassaEventiAI.ViewModels;
+using CassaEventiAI.Views.FrontOffice;
 using Microsoft.Extensions.DependencyInjection;
 using System.Windows;
 using System.Windows.Controls;
 
-namespace CplCassaEventi.Views.Shared;
+namespace CassaEventiAI.Views.Shared;
 
 public partial class LoginWindow : Window
 {

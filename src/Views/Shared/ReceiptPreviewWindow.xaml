@@ -1,4 +1,4 @@
-<Window x:Class="CplCassaEventi.Views.Shared.ReceiptPreviewWindow"
+<Window x:Class="CassaEventiAI.Views.Shared.ReceiptPreviewWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="Anteprima scontrino" Height="620" Width="460"

@@ -1,7 +1,7 @@
 using System.IO;
 using System.Timers;
 
-namespace CplCassaEventi.Services;
+namespace CassaEventiAI.Services;
 
 public class BackupService : IDisposable
 {

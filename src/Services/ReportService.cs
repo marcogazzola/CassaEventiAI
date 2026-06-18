@@ -1,12 +1,13 @@
-using CplCassaEventi.Data;
-using CplCassaEventi.Models;
+using CassaEventiAI.Data;
+using CassaEventiAI.Models;
 using ClosedXML.Excel;
 using Microsoft.EntityFrameworkCore;
 
-namespace CplCassaEventi.Services;
+namespace CassaEventiAI.Services;
 
 public record DailyCashReport(
-    DateTime Date,
+    DateTime StartDate,
+    DateTime EndDate,
     int IssuedReceipts,
     int VoidedReceipts,
     decimal TotalSold,
@@ -36,6 +37,7 @@ public class ReportService(EventService eventService)
 
         return new DailyCashReport(
             startDate,
+            endDate,
             sales.Count,
             sales.Count(s => s.IsVoided),
             activeSales.Sum(s => s.Total),
@@ -63,8 +65,8 @@ public class ReportService(EventService eventService)
         using var workbook = new XLWorkbook();
         var ws = workbook.Worksheets.Add("Incasso");
 
-        ws.Cell(1, 1).Value = "Data";
-        ws.Cell(1, 2).Value = report.Date.ToString("dd/MM/yyyy");
+        ws.Cell(1, 1).Value = "Periodo";
+        ws.Cell(1, 2).Value = $"{report.StartDate:dd/MM/yyyy} - {report.EndDate:dd/MM/yyyy}";
         ws.Cell(2, 1).Value = "Scontrini emessi";
         ws.Cell(2, 2).Value = report.IssuedReceipts;
         ws.Cell(3, 1).Value = "Scontrini annullati";

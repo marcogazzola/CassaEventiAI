@@ -1,6 +1,6 @@
 using System.IO;
 
-namespace CplCassaEventi.Services;
+namespace CassaEventiAI.Services;
 
 public class UsbService
 {

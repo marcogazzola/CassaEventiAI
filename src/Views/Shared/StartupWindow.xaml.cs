@@ -1,9 +1,9 @@
-using CplCassaEventi.ViewModels;
+using CassaEventiAI.ViewModels;
 using Microsoft.Extensions.DependencyInjection;
 using System.Windows;
 using System.Windows.Controls;
 
-namespace CplCassaEventi.Views.Shared;
+namespace CassaEventiAI.Views.Shared;
 
 public partial class StartupWindow : Window
 {

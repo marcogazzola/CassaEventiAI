@@ -1,6 +1,6 @@
 using System.Windows;
 
-namespace CplCassaEventi.Views.Shared;
+namespace CassaEventiAI.Views.Shared;
 
 public partial class ReceiptPreviewWindow : Window
 {

@@ -1,6 +1,6 @@
-using CplCassaEventi.Models;
+using CassaEventiAI.Models;
 
-namespace CplCassaEventi.Services;
+namespace CassaEventiAI.Services;
 
 public class ProductService(ConfigService config)
 {

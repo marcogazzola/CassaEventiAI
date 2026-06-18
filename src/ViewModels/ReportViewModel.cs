@@ -1,10 +1,10 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using CplCassaEventi.Models;
-using CplCassaEventi.Services;
+using CassaEventiAI.Models;
+using CassaEventiAI.Services;
 using System.Collections.ObjectModel;
 
-namespace CplCassaEventi.ViewModels;
+namespace CassaEventiAI.ViewModels;
 
 public partial class ReportViewModel : BaseViewModel
 {
@@ -56,6 +56,11 @@ public partial class ReportViewModel : BaseViewModel
             DailyOrders = new(orders);
             SelectedOrder = DailyOrders.FirstOrDefault();
         }
+        catch (Exception ex)
+        {
+            StatusMessage = $"Errore aggiornamento report: {ex.Message}";
+            ShowError(StatusMessage);
+        }
         finally
         {
             IsBusy = false;
@@ -65,50 +70,76 @@ public partial class ReportViewModel : BaseViewModel
     [RelayCommand]
     private async Task ExportExcelAsync()
     {
-        var dialog = new Microsoft.Win32.SaveFileDialog
+        try
         {
-            Filter = "Excel|*.xlsx",
-            FileName = $"incasso_{FromDate:yyyyMMdd}_a_{ToDate:yyyyMMdd}.xlsx",
-            DefaultExt = ".xlsx"
-        };
-        if (dialog.ShowDialog() != true)
-            return;
+            var dialog = new Microsoft.Win32.SaveFileDialog
+            {
+                Filter = "Excel|*.xlsx",
+                FileName = $"incasso_{FromDate:yyyyMMdd}_a_{ToDate:yyyyMMdd}.xlsx",
+                DefaultExt = ".xlsx"
+            };
+            if (dialog.ShowDialog() != true)
+                return;
 
-        var startOfDay = FromDate.Date;
-        var endOfDay = ToDate.Date.AddDays(1).AddTicks(-1);
-        var report = await _report.GetDailyCashReportAsync(startOfDay, endOfDay);
-        await _report.ExportDailyCashExcelAsync(dialog.FileName, report);
-        StatusMessage = $"Esportato: {System.IO.Path.GetFileName(dialog.FileName)}";
+            var startOfDay = FromDate.Date;
+            var endOfDay = ToDate.Date.AddDays(1).AddTicks(-1);
+            var report = await _report.GetDailyCashReportAsync(startOfDay, endOfDay);
+            await _report.ExportDailyCashExcelAsync(dialog.FileName, report);
+            StatusMessage = $"Esportato: {System.IO.Path.GetFileName(dialog.FileName)}";
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = $"Errore export Excel: {ex.Message}";
+            ShowError(StatusMessage);
+        }
     }
 
     [RelayCommand]
     private async Task PrintSelectedPreviewAsync()
     {
-        if (SelectedOrder == null || string.IsNullOrWhiteSpace(SelectedOrderPreview))
-            return;
-        _printing.PrintRawPreview(SelectedOrderPreview);
-        await Task.CompletedTask;
+        try
+        {
+            if (SelectedOrder == null || string.IsNullOrWhiteSpace(SelectedOrderPreview))
+                return;
+            _printing.PrintRawPreview(SelectedOrderPreview);
+            await Task.CompletedTask;
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = $"Errore stampa anteprima: {ex.Message}";
+            ShowError(StatusMessage);
+        }
     }
 
     private async Task LoadSelectedOrderDetailAsync(DailyOrderRow? row)
     {
-        if (row == null)
+        try
+        {
+            if (row == null)
+            {
+                SelectedOrderItems = [];
+                SelectedOrderPreview = string.Empty;
+                return;
+            }
+
+            var sale = await _sales.GetSaleByIdAsync(row.SaleId);
+            if (sale == null)
+            {
+                SelectedOrderItems = [];
+                SelectedOrderPreview = string.Empty;
+                return;
+            }
+
+            SelectedOrderItems = new(sale.Items.OrderBy(i => i.DepartmentName).ThenBy(i => i.ProductName));
+            var departments = _products.GetDepartments();
+            SelectedOrderPreview = _printing.BuildSalePreview(sale, null, departments);
+        }
+        catch (Exception ex)
         {
             SelectedOrderItems = [];
             SelectedOrderPreview = string.Empty;
-            return;
+            StatusMessage = $"Errore caricamento ordine: {ex.Message}";
+            ShowError(StatusMessage);
         }
-
-        var sale = await _sales.GetSaleByIdAsync(row.SaleId);
-        if (sale == null)
-        {
-            SelectedOrderItems = [];
-            SelectedOrderPreview = string.Empty;
-            return;
-        }
-
-        SelectedOrderItems = new(sale.Items.OrderBy(i => i.DepartmentName).ThenBy(i => i.ProductName));
-        var departments = _products.GetDepartments();
-        SelectedOrderPreview = _printing.BuildSalePreview(sale, null, departments);
     }
 }

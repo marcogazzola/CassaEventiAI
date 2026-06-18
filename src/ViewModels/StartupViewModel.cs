@@ -1,11 +1,11 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using CplCassaEventi.Models;
-using CplCassaEventi.Services;
+using CassaEventiAI.Models;
+using CassaEventiAI.Services;
 using System.Collections.ObjectModel;
 using System.IO;
 
-namespace CplCassaEventi.ViewModels;
+namespace CassaEventiAI.ViewModels;
 
 public partial class StartupViewModel : BaseViewModel
 {

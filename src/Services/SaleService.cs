@@ -1,8 +1,8 @@
-using CplCassaEventi.Data;
-using CplCassaEventi.Models;
+using CassaEventiAI.Data;
+using CassaEventiAI.Models;
 using Microsoft.EntityFrameworkCore;
 
-namespace CplCassaEventi.Services;
+namespace CassaEventiAI.Services;
 
 public class SaleService(EventService eventService, AuthService auth, ProductService productService)
 {

@@ -1,8 +1,8 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using CplCassaEventi.Services;
+using CassaEventiAI.Services;
 
-namespace CplCassaEventi.ViewModels;
+namespace CassaEventiAI.ViewModels;
 
 public partial class LoginViewModel(AuthService auth) : BaseViewModel
 {
@@ -16,7 +16,6 @@ public partial class LoginViewModel(AuthService auth) : BaseViewModel
     [ObservableProperty] private string _confirmPassword = string.Empty;
 
     public event Action? LoginSucceeded;
-    public event Action<int>? MustChangePasswordRequired; // passes operatorId
 
     [RelayCommand]
     private void Login()

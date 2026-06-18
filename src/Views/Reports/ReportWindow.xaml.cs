@@ -1,7 +1,7 @@
-using CplCassaEventi.ViewModels;
+using CassaEventiAI.ViewModels;
 using System.Windows;
 
-namespace CplCassaEventi.Views.Reports;
+namespace CassaEventiAI.Views.Reports;
 
 public partial class ReportWindow : Window
 {

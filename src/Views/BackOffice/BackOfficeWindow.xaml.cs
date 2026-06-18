@@ -1,10 +1,10 @@
-using CplCassaEventi.ViewModels;
-using CplCassaEventi.Views.FrontOffice;
+using CassaEventiAI.ViewModels;
+using CassaEventiAI.Views.FrontOffice;
 using System.Windows.Forms;
 using System.Windows;
 using System.Windows.Controls;
 
-namespace CplCassaEventi.Views.BackOffice;
+namespace CassaEventiAI.Views.BackOffice;
 
 public partial class BackOfficeWindow : Window
 {

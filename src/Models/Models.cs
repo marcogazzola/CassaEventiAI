@@ -2,7 +2,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace CplCassaEventi.Models;
+namespace CassaEventiAI.Models;
 
 // ── DB Entities ───────────────────────────────────────────────────────────
 

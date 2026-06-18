@@ -1,15 +1,15 @@
-using CplCassaEventi.Models;
+using CassaEventiAI.Models;
 using System.IO;
 using System.Text.Json;
 
-namespace CplCassaEventi.Services;
+namespace CassaEventiAI.Services;
 
 public class ConfigService
 {
     private static readonly JsonSerializerOptions _json = new() { WriteIndented = true };
 
     private static string AppDataRoot =>
-        Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "CplCassaEventi");
+        Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "CassaEventiAI");
 
     public string DataFolder => Path.Combine(AppDataRoot, "Config");
     private string ArchiveFolder => Path.Combine(AppDataRoot, "Archive");

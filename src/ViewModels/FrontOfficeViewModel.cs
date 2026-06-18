@@ -1,13 +1,13 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using CplCassaEventi.Models;
-using CplCassaEventi.Services;
-using CplCassaEventi.Views.Shared;
+using CassaEventiAI.Models;
+using CassaEventiAI.Services;
+using CassaEventiAI.Views.Shared;
 using System.Collections.ObjectModel;
 using System.Windows;
 using System.Windows.Threading;
 
-namespace CplCassaEventi.ViewModels;
+namespace CassaEventiAI.ViewModels;
 
 public partial class FrontOfficeViewModel : BaseViewModel
 {
@@ -15,22 +15,26 @@ public partial class FrontOfficeViewModel : BaseViewModel
     private readonly ProductService _products;
     private readonly PrintingService _printing;
     private readonly ConfigService _config;
+    private readonly AuthService _auth;
     private readonly DispatcherTimer _clockTimer;
     private int? _currentShiftId;
     public event Action? ShiftClosed;
 
     public FrontOfficeViewModel(
         SaleService sales, ProductService products,
-        PrintingService printing, ConfigService config)
+        PrintingService printing, ConfigService config, AuthService auth)
     {
         _sales = sales;
         _products = products;
         _printing = printing;
         _config = config;
+        _auth = auth;
 
         _clockTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
         _clockTimer.Tick += (_, _) => ToolbarDateTime = DateTime.Now.ToString("dd/MM/yyyy HH:mm:ss");
         ToolbarDateTime = DateTime.Now.ToString("dd/MM/yyyy HH:mm:ss");
+        IsAdmin = _auth.IsAdmin;
+        ConnectedUserName = _auth.CurrentOperator?.DisplayName ?? "—";
         _clockTimer.Start();
 
         ReloadProducts();
@@ -54,6 +58,8 @@ public partial class FrontOfficeViewModel : BaseViewModel
     [ObservableProperty] private decimal _totalIncassato;
     [ObservableProperty] private decimal _lastOrderAmount;
     [ObservableProperty] private bool _showTotalInFooter;
+    [ObservableProperty] private bool _isAdmin;
+    [ObservableProperty] private string _connectedUserName = string.Empty;
     [ObservableProperty] private string _toolbarDateTime = string.Empty;
     [ObservableProperty] private bool _voidPanelVisible;
     [ObservableProperty] private string _voidReason = string.Empty;
@@ -63,7 +69,7 @@ public partial class FrontOfficeViewModel : BaseViewModel
 
     partial void OnDiscountPctChanged(decimal value)
     {
-        DiscountPct = Math.Round(Math.Max(0, value), 2);
+        DiscountPct = Math.Round(Math.Clamp(value, 0m, 100m), 2);
         RecalcTotals();
     }
 
@@ -348,6 +354,6 @@ public partial class FrontOfficeViewModel : BaseViewModel
         SalesCount = count;
         TotalIncassato = total;
         LastOrderAmount = last;
-        ShowTotalInFooter = App.CurrentSettings.ShowTotalInFooter;
+        ShowTotalInFooter = _auth.IsAdmin || App.CurrentSettings.ShowTotalInFooter;
     }
 }

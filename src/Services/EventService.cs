@@ -1,8 +1,8 @@
-using CplCassaEventi.Data;
-using CplCassaEventi.Models;
+using CassaEventiAI.Data;
+using CassaEventiAI.Models;
 using System.IO;
 
-namespace CplCassaEventi.Services;
+namespace CassaEventiAI.Services;
 
 public class EventService(ConfigService config)
 {

@@ -1,15 +1,15 @@
-using CplCassaEventi.Data;
-using CplCassaEventi.Models;
-using CplCassaEventi.Services;
-using CplCassaEventi.ViewModels;
-using CplCassaEventi.Views.BackOffice;
-using CplCassaEventi.Views.FrontOffice;
-using CplCassaEventi.Views.Reports;
-using CplCassaEventi.Views.Shared;
+using CassaEventiAI.Data;
+using CassaEventiAI.Models;
+using CassaEventiAI.Services;
+using CassaEventiAI.ViewModels;
+using CassaEventiAI.Views.BackOffice;
+using CassaEventiAI.Views.FrontOffice;
+using CassaEventiAI.Views.Reports;
+using CassaEventiAI.Views.Shared;
 using Microsoft.Extensions.DependencyInjection;
 using System.Windows;
 
-namespace CplCassaEventi;
+namespace CassaEventiAI;
 
 public partial class App : System.Windows.Application
 {

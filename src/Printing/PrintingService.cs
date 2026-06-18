@@ -1,8 +1,8 @@
-using CplCassaEventi.Models;
+using CassaEventiAI.Models;
 using System.Drawing;
 using System.Drawing.Printing;
 
-namespace CplCassaEventi.Services;
+namespace CassaEventiAI.Services;
 
 public class PrintingService(ReceiptService receiptService)
 {
