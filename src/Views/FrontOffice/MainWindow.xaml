@@ -379,9 +379,27 @@
                         <Grid>
                             <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="8"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
                             <Button Grid.Column="0" Content="{Binding SelectedVoidSale.IsVoided, Converter={StaticResource BoolToVoidLabel}}" 
-                                    Style="{Binding SelectedVoidSale.IsVoided, Converter={StaticResource BoolToVoidStyle}}"
-                                    Height="40" Command="{Binding ConfirmVoidCommand}"/>
+                                    Height="40" Command="{Binding ConfirmVoidCommand}">
+                                <Button.Style>
+                                    <Style TargetType="Button" BasedOn="{StaticResource DeptTabButton}">
+                                        <Setter Property="Background" Value="{StaticResource AccentRedBgBrush}"/>
+                                        <Setter Property="BorderBrush" Value="{StaticResource AccentRedBrush}"/>
+                                        <Setter Property="Foreground" Value="{StaticResource AccentRedBrush}"/>
+                                        <Setter Property="FontWeight" Value="SemiBold"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding SelectedVoidSale.IsVoided}" Value="True">
+                                                <Setter Property="Background" Value="{StaticResource AccentGreenBgBrush}"/>
+                                                <Setter Property="BorderBrush" Value="{StaticResource AccentGreenBrush}"/>
+                                                <Setter Property="Foreground" Value="{StaticResource AccentGreenBrush}"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Button.Style>
+                            </Button>
                             <Button Grid.Column="2" Content="Chiudi" Style="{StaticResource DeptTabButton}"
+                                    Background="{StaticResource BgPrimaryBrush}"
+                                    BorderBrush="{StaticResource BorderBrush}"
+                                    Foreground="{StaticResource TextSecondaryBrush}"
                                     Height="40" Command="{Binding CloseVoidPanelCommand}"/>
                         </Grid>
                     </StackPanel>
