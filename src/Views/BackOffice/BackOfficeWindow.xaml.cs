@@ -1,8 +1,11 @@
 using CassaEventiAI.ViewModels;
+using CassaEventiAI.Models;
 using CassaEventiAI.Views.FrontOffice;
 using System.Windows.Forms;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
+using System.Windows.Media;
 
 namespace CassaEventiAI.Views.BackOffice;
 
@@ -67,5 +70,48 @@ public partial class BackOfficeWindow : Window
 
         hex = $"#{dialog.Color.R:X2}{dialog.Color.G:X2}{dialog.Color.B:X2}";
         return true;
+    }
+
+    private void DepartmentsGrid_MouseDoubleClick(object sender, MouseButtonEventArgs e)
+    {
+        if (!TryGetClickedRow(e.OriginalSource, out _))
+            return;
+
+        if (((System.Windows.Controls.DataGrid)sender).SelectedItem is Department d && _vm.Departments.EditCommand.CanExecute(d))
+            _vm.Departments.EditCommand.Execute(d);
+    }
+
+    private void ProductsGrid_MouseDoubleClick(object sender, MouseButtonEventArgs e)
+    {
+        if (!TryGetClickedRow(e.OriginalSource, out _))
+            return;
+
+        if (((System.Windows.Controls.DataGrid)sender).SelectedItem is Product p && _vm.Products.EditCommand.CanExecute(p))
+            _vm.Products.EditCommand.Execute(p);
+    }
+
+    private void OperatorsGrid_MouseDoubleClick(object sender, MouseButtonEventArgs e)
+    {
+        if (!TryGetClickedRow(e.OriginalSource, out _))
+            return;
+
+        if (((System.Windows.Controls.DataGrid)sender).SelectedItem is Operator op && _vm.Operators.EditOperatorCommand.CanExecute(op))
+            _vm.Operators.EditOperatorCommand.Execute(op);
+    }
+
+    private static bool TryGetClickedRow(object source, out DataGridRow? row)
+    {
+        row = null;
+        var current = source as DependencyObject;
+        while (current != null)
+        {
+            if (current is DataGridRow r)
+            {
+                row = r;
+                return true;
+            }
+            current = VisualTreeHelper.GetParent(current);
+        }
+        return false;
     }
 }

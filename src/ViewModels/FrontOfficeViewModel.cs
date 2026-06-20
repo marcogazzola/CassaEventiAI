@@ -75,8 +75,9 @@ public partial class FrontOfficeViewModel : BaseViewModel
 
     partial void OnCashGivenChanged(decimal value)
     {
+        CashGiven = Math.Round(Math.Clamp(value, 0m, 1000m), 2);
         if (SelectedPaymentMethod?.RequiresCashInput == true)
-            Change = Math.Max(0, value - Total);
+            Change = Math.Max(0, CashGiven - Total);
     }
 
     partial void OnSelectedPaymentMethodChanged(PaymentMethod? value)
