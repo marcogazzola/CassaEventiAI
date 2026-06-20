@@ -5,7 +5,7 @@
 #define AppName      "CPL Cassa Eventi"
 #define AppPublisher "MarcoGazzola.com"
 #define AppExeName   "CassaEventiAI.exe"
-#define AppId        "{3F8A1C6E-9B2D-4E7A-8F0C-2D5E9A3B6F1C}"
+#define AppId        "3F8A1C6E-9B2D-4E7A-8F0C-2D5E9A3B6F1C"
 
 [Setup]
 AppId={#AppId}
