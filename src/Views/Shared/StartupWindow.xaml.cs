@@ -14,6 +14,7 @@ public partial class StartupWindow : Window
         _vm = vm;
         DataContext = vm;
         vm.ProceedToLogin += OnProceedToLogin;
+        Loaded += async (_, _) => await _vm.CheckForUpdatesAsync();
     }
 
     private void AdminPwdBox_PasswordChanged(object sender, RoutedEventArgs e)

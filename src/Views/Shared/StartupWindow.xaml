@@ -14,10 +14,20 @@
         </Grid.RowDefinitions>
 
         <StackPanel Grid.Row="0" Margin="0,0,0,24">
-            <TextBlock Text="CPL Cassa Eventi" FontSize="26" FontWeight="Bold"
-                       Foreground="{StaticResource TextPrimaryBrush}"/>
+            <Grid>
+                <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                <TextBlock Text="CPL Cassa Eventi" FontSize="26" FontWeight="Bold"
+                           Foreground="{StaticResource TextPrimaryBrush}"/>
+                <TextBlock Grid.Column="1" Text="{Binding AppVersion}" FontSize="11"
+                           Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Bottom"/>
+            </Grid>
             <TextBlock Text="CPL Concordia · Gestione cassa eventi"
                        FontSize="13" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,4,0,0"/>
+            <Border Background="#1E3A8A" CornerRadius="4" Padding="10,6" Margin="0,8,0,0"
+                    Visibility="{Binding UpdateAvailable, Converter={StaticResource BoolToVis}}">
+                <TextBlock Text="{Binding UpdateStatusText}" FontSize="12"
+                           Foreground="White" FontWeight="SemiBold"/>
+            </Border>
         </StackPanel>
 
         <!-- Evento attivo -->

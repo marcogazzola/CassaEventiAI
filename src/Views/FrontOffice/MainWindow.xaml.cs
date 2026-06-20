@@ -69,11 +69,6 @@ public partial class MainWindow : Window
                 startup.Show();
                 startup.Activate();
                 Close();
-
-                // var startup = App.Services.GetRequiredService<StartupWindow>();
-                // startup.Show();
-                // startup.Activate();
-                // Close();
                 return;
             }
             _vm.ReloadProductsCommand.Execute(null);

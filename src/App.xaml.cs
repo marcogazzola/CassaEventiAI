@@ -41,6 +41,7 @@ public partial class App : System.Windows.Application
         s.AddSingleton<UsbService>();
         s.AddSingleton<AuthService>();
         s.AddSingleton<ProductService>();
+        s.AddSingleton<UpdateService>();
 
         // Scoped/transient services
         s.AddTransient<SaleService>();
