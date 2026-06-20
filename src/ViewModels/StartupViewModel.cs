@@ -50,7 +50,7 @@ public partial class StartupViewModel : BaseViewModel
         UpdateStatusText = $"Aggiornamento disponibile: {release.TagName}";
         UpdateAvailable = true;
 
-        var result = MessageBox.Show(
+        var result = System.Windows.MessageBox.Show(
             $"È disponibile la versione {release.TagName}.\nVuoi scaricare e installare l'aggiornamento?",
             "Aggiornamento disponibile",
             MessageBoxButton.YesNo,
@@ -60,9 +60,9 @@ public partial class StartupViewModel : BaseViewModel
 
         UpdateStatusText = "Download in corso...";
         await _update.DownloadAndInstallAsync(release,
-            pct => Application.Current.Dispatcher.Invoke(() => UpdateStatusText = $"Download: {pct}%"));
+            pct => System.Windows.Application.Current.Dispatcher.Invoke(() => UpdateStatusText = $"Download: {pct}%"));
 
-        Application.Current.Shutdown();
+        System.Windows.Application.Current.Shutdown();
     }
 
     [RelayCommand]
