@@ -27,7 +27,7 @@ public partial class StartupViewModel : BaseViewModel
     [ObservableProperty] private bool _isFirstRun;
     [ObservableProperty] private string _activeEventName = string.Empty;
     [ObservableProperty] private string _newEventName = string.Empty;
-    [ObservableProperty] private ObservableCollection<(string Name, string Path, DateTime Date)> _archivedEvents = [];
+    [ObservableProperty] private ObservableCollection<ArchivedEventInfo> _archivedEvents = [];
 
     // First admin setup (only shown when no operators exist yet)
     [ObservableProperty] private string _adminUsername = "admin";
@@ -63,9 +63,9 @@ public partial class StartupViewModel : BaseViewModel
     }
 
     [RelayCommand]
-    private void OpenArchived((string Name, string Path, DateTime Date) ev)
+    private void OpenArchived(ArchivedEventInfo ev)
     {
-        _events.OpenEvent(ev.Name, ev.Path);
+        _events.ReopenArchivedEvent(ev);
         ProceedToLogin?.Invoke();
     }
 }

@@ -1,9 +1,10 @@
+using CassaEventiAI.Models;
 using System.IO;
 using System.Timers;
 
 namespace CassaEventiAI.Services;
 
-public class BackupService : IDisposable
+public class BackupService(ConfigService config) : IDisposable
 {
     private System.Timers.Timer? _timer;
 
@@ -25,23 +26,38 @@ public class BackupService : IDisposable
         var settings = App.CurrentSettings;
         if (string.IsNullOrEmpty(settings.ActiveDbPath)) return string.Empty;
 
-        var backupFolder = Path.Combine(
-            Path.GetDirectoryName(settings.ActiveDbPath)!, "Backups");
+        var safeName = MakeSafeFileName(settings.ActiveEventName ?? "evento");
+        var backupFolder = config.GetBackupsFolder();
         Directory.CreateDirectory(backupFolder);
 
-        var fileName = $"backup_{DateTime.Now:yyyyMMdd_HHmmss}.db";
+        var fileName = $"{safeName}_backup_{DateTime.Now:yyyyMMdd_HHmmss}.db";
         var dest = Path.Combine(backupFolder, fileName);
 
         File.Copy(settings.ActiveDbPath, dest, overwrite: true);
 
-        // Keep only last 10 backups
-        var backups = Directory.GetFiles(backupFolder, "backup_*.db")
+        var backups = Directory.GetFiles(backupFolder, $"{safeName}_backup_*.db")
             .OrderByDescending(f => f).ToList();
         foreach (var old in backups.Skip(10))
             File.Delete(old);
 
         return dest;
     }
+
+    public List<BackupInfo> GetBackupsForCurrentEvent()
+    {
+        var settings = App.CurrentSettings;
+        if (string.IsNullOrEmpty(settings.ActiveEventName)) return [];
+        var safeName = MakeSafeFileName(settings.ActiveEventName);
+        var backupFolder = config.GetBackupsFolder();
+        if (!Directory.Exists(backupFolder)) return [];
+        return Directory.GetFiles(backupFolder, $"{safeName}_backup_*.db")
+            .Select(f => new BackupInfo { Path = f, Date = File.GetLastWriteTime(f) })
+            .OrderByDescending(x => x.Date)
+            .ToList();
+    }
+
+    private static string MakeSafeFileName(string name)
+        => string.Concat(name.Split(Path.GetInvalidFileNameChars())).Replace(" ", "_").ToLower();
 
     public void BackupToUsb(string usbPath)
     {

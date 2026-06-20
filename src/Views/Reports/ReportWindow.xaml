@@ -3,7 +3,8 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:conv="clr-namespace:CassaEventiAI.Converters"
         Title="Reportistica" Height="760" Width="1080"
-        WindowStartupLocation="CenterOwner">
+        WindowStartupLocation="CenterOwner"
+        Icon="/Resources/cassa.ico">
     <Window.Resources>
         <conv:EuroConverter x:Key="Euro"/>
     </Window.Resources>

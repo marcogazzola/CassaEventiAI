@@ -36,27 +36,58 @@ public class EventService(ConfigService config)
         var s = App.CurrentSettings;
         var archiveFolder = config.GetArchiveFolder();
         Directory.CreateDirectory(archiveFolder);
-        var archiveName = $"{MakeSafeFileName(s.ActiveEventName ?? "evento")}_{DateTime.Now:ddMMyyyy_HHmm}.db";
+        var safeName = MakeSafeFileName(s.ActiveEventName ?? "evento");
+        var archiveName = $"{safeName}_Archived_{DateTime.Now:yyyyMMdd_HHmm}.db";
         var dest = Path.Combine(archiveFolder, archiveName);
         _db.Dispose(); _db = null;
-        File.Copy(s.ActiveDbPath!, dest);
+        File.Move(s.ActiveDbPath!, dest);
         s.ActiveDbPath = string.Empty;
         s.ActiveEventName = string.Empty;
         config.SaveAppSettings(s);
         return dest;
     }
 
-    public List<(string Name, string Path, DateTime Date)> GetArchivedEvents()
+    public List<ArchivedEventInfo> GetArchivedEvents()
     {
         var folder = config.GetArchiveFolder();
         if (!Directory.Exists(folder)) return [];
-        return Directory.GetFiles(folder, "*.db")
-            .Select(f => (
-                Name: Path.GetFileNameWithoutExtension(f).Replace("_", " "),
-                Path: f,
-                Date: File.GetLastWriteTime(f)))
+        return Directory.GetFiles(folder, "*_Archived_*.db")
+            .Select(f =>
+            {
+                var stem = Path.GetFileNameWithoutExtension(f);
+                var idx = stem.LastIndexOf("_Archived_", StringComparison.Ordinal);
+                var originalSafe = idx >= 0 ? stem[..idx] : stem;
+                return new ArchivedEventInfo
+                {
+                    Name = originalSafe.Replace("_", " "),
+                    Path = f,
+                    Date = File.GetLastWriteTime(f)
+                };
+            })
             .OrderByDescending(x => x.Date)
             .ToList();
+    }
+
+    public void RestoreFromBackup(string backupPath)
+    {
+        var s = App.CurrentSettings;
+        if (string.IsNullOrEmpty(s.ActiveDbPath))
+            throw new InvalidOperationException("Nessun evento attivo.");
+        _db?.Dispose(); _db = null;
+        File.Copy(backupPath, s.ActiveDbPath!, overwrite: true);
+        _db = CassaDbContext.Create(s.ActiveDbPath!);
+    }
+
+    public void ReopenArchivedEvent(ArchivedEventInfo ev)
+    {
+        var stem = Path.GetFileNameWithoutExtension(ev.Path);
+        var idx = stem.LastIndexOf("_Archived_", StringComparison.Ordinal);
+        var originalSafe = idx >= 0 ? stem[..idx] : stem;
+        var eventsFolder = config.GetEventsFolder();
+        Directory.CreateDirectory(eventsFolder);
+        var dest = Path.Combine(eventsFolder, $"{originalSafe}.db");
+        File.Move(ev.Path, dest);
+        OpenEvent(ev.Name.Trim(), dest);
     }
 
     private static string MakeSafeFileName(string name)

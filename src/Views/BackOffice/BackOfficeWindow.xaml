@@ -3,7 +3,8 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:conv="clr-namespace:CassaEventiAI.Converters"
         Title="Settings — CassaEventiAI" Height="760" Width="1020"
-        WindowStartupLocation="CenterOwner">
+        WindowStartupLocation="CenterOwner"
+        Icon="/Resources/cassa.ico">
     <Window.Resources>
         <conv:BoolToVisibilityConverter x:Key="BoolToVis"/>
         <conv:InverseBoolToVisibilityConverter x:Key="InvBoolToVis"/>
@@ -445,18 +446,6 @@
                 <ScrollViewer VerticalScrollBarVisibility="Auto">
                     <StackPanel Margin="10" MaxWidth="620">
 
-                        <TextBlock Text="Crea nuovo evento" FontSize="14" FontWeight="SemiBold"
-                                   Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,10"/>
-                        <Border Style="{StaticResource Card}" Margin="0,0,0,14">
-                            <Grid>
-                                <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
-                                <TextBox Height="36" Padding="8,0" Margin="0,0,8,0" VerticalContentAlignment="Center"
-                                         Text="{Binding NewEventName, UpdateSourceTrigger=PropertyChanged}"/>
-                                <Button Grid.Column="1" Content="Crea evento" Style="{StaticResource PrimaryButton}"
-                                        Command="{Binding CreateNewEventCommand}"/>
-                            </Grid>
-                        </Border>
-
                         <TextBlock Text="Chiudi evento corrente" FontSize="14" FontWeight="SemiBold"
                                    Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,10"/>
                         <Border Style="{StaticResource Card}" Margin="0,0,0,14">
@@ -468,40 +457,39 @@
                             </StackPanel>
                         </Border>
 
-                        <TextBlock Text="Archivio eventi" FontSize="14" FontWeight="SemiBold"
-                                   Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,10"/>
-                        <Border Style="{StaticResource Card}" Margin="0,0,0,14">
-                            <ItemsControl ItemsSource="{Binding ArchivedEvents}">
-                                <ItemsControl.ItemTemplate>
-                                    <DataTemplate>
-                                        <Border Background="{StaticResource BgSecondaryBrush}" CornerRadius="6"
-                                                Padding="10,8" Margin="0,3">
-                                            <Grid>
-                                                <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
-                                                <StackPanel>
-                                                    <TextBlock Text="{Binding Name}" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
-                                                    <TextBlock Text="{Binding Date, StringFormat='{}{0:dd/MM/yyyy HH:mm}'}"
-                                                               FontSize="11" Foreground="{StaticResource TextSecondaryBrush}"/>
-                                                </StackPanel>
-                                                <Button Grid.Column="1" Content="Riapri" Style="{StaticResource PrimaryButton}" Padding="10,5"
-                                                        Command="{Binding DataContext.OpenArchivedEventCommand, RelativeSource={RelativeSource AncestorType=TabItem}}"
-                                                        CommandParameter="{Binding}"/>
-                                            </Grid>
-                                        </Border>
-                                    </DataTemplate>
-                                </ItemsControl.ItemTemplate>
-                            </ItemsControl>
-                        </Border>
-
                         <TextBlock Text="Backup e chiavetta USB" FontSize="14" FontWeight="SemiBold"
                                    Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,10"/>
-                        <Border Style="{StaticResource Card}">
+                        <Border Style="{StaticResource Card}" Margin="0,0,0,14">
                             <WrapPanel>
                                 <Button Content="Backup ora" Style="{StaticResource PrimaryButton}" Padding="12,7" Margin="0,0,8,0" Command="{Binding RunManualBackupCommand}"/>
                                 <Button Content="Backup su USB" Style="{StaticResource PrimaryButton}" Padding="12,7" Margin="0,0,8,0" Command="{Binding BackupToUsbCommand}"/>
                                 <Button Content="Esporta config USB" Style="{StaticResource SuccessButton}" Padding="12,7" Margin="0,0,8,0" Command="{Binding ExportConfigToUsbCommand}"/>
                                 <Button Content="Importa config USB" Style="{StaticResource WarnButton}" Padding="12,7" Command="{Binding ImportConfigFromUsbCommand}"/>
                             </WrapPanel>
+                        </Border>
+
+                        <TextBlock Text="Ripristina backup" FontSize="14" FontWeight="SemiBold"
+                                   Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,10"
+                                   Visibility="{Binding HasBackups, Converter={StaticResource BoolToVis}}"/>
+                        <Border Style="{StaticResource Card}"
+                                Visibility="{Binding HasBackups, Converter={StaticResource BoolToVis}}">
+                            <ItemsControl ItemsSource="{Binding Backups}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Border Background="{StaticResource BgSecondaryBrush}" CornerRadius="6"
+                                                Padding="10,8" Margin="0,3">
+                                            <Grid>
+                                                <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                                                <TextBlock Text="{Binding Date, StringFormat='{}{0:dd/MM/yyyy HH:mm:ss}'}"
+                                                           VerticalAlignment="Center" Foreground="{StaticResource TextPrimaryBrush}"/>
+                                                <Button Grid.Column="1" Content="Ripristina" Style="{StaticResource WarnButton}" Padding="10,5"
+                                                        Command="{Binding DataContext.RestoreBackupCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                        CommandParameter="{Binding}"/>
+                                            </Grid>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
                         </Border>
                     </StackPanel>
                 </ScrollViewer>

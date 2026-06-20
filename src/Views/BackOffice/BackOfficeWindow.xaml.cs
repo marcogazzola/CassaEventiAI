@@ -18,6 +18,16 @@ public partial class BackOfficeWindow : Window
         InitializeComponent();
         _vm = vm;
         DataContext = vm;
+        vm.EventArchived += OnNavigateToStartup;
+        vm.EventRestored += OnNavigateToStartup;
+    }
+
+    public bool ShouldNavigateToStartup { get; private set; }
+
+    private void OnNavigateToStartup()
+    {
+        ShouldNavigateToStartup = true;
+        Close();
     }
 
     private void CloseBtn_Click(object sender, RoutedEventArgs e) => Close();

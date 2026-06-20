@@ -14,6 +14,7 @@ public class ConfigService
     public string DataFolder => Path.Combine(AppDataRoot, "Config");
     private string ArchiveFolder => Path.Combine(AppDataRoot, "Archive");
     private string EventsFolder => Path.Combine(AppDataRoot, "Events");
+    private string BackupsFolder => Path.Combine(AppDataRoot, "Backups");
     private string AppSettingsFile => Path.Combine(AppDataRoot, "app_settings.json");
 
     private string DepartmentsFile => Path.Combine(DataFolder, "departments.json");
@@ -29,10 +30,12 @@ public class ConfigService
         Directory.CreateDirectory(DataFolder);
         Directory.CreateDirectory(ArchiveFolder);
         Directory.CreateDirectory(EventsFolder);
+        Directory.CreateDirectory(BackupsFolder);
     }
 
     public string GetArchiveFolder() => ArchiveFolder;
     public string GetEventsFolder() => EventsFolder;
+    public string GetBackupsFolder() => BackupsFolder;
 
     // ── AppSettings ───────────────────────────────────────────────────────
 

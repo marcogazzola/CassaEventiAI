@@ -40,16 +40,21 @@ public partial class BackOfficeViewModel : BaseViewModel
 
     // ── Event info ────────────────────────────────────────────────────────
 
+    public event Action? EventArchived;
+    public event Action? EventRestored;
+
     [ObservableProperty] private string _activeEventName = string.Empty;
     [ObservableProperty] private string _activeDbPath = string.Empty;
-    [ObservableProperty] private ObservableCollection<(string Name, string Path, DateTime Date)> _archivedEvents = [];
     [ObservableProperty] private string _newEventName = string.Empty;
+    [ObservableProperty] private ObservableCollection<BackupInfo> _backups = [];
+    [ObservableProperty] private bool _hasBackups;
 
     private void LoadEventInfo()
     {
         ActiveEventName = App.CurrentSettings.ActiveEventName;
         ActiveDbPath = App.CurrentSettings.ActiveDbPath;
-        ArchivedEvents = new(_events.GetArchivedEvents());
+        Backups = new(_backup.GetBackupsForCurrentEvent());
+        HasBackups = Backups.Count > 0;
     }
 
     [RelayCommand]
@@ -67,18 +72,16 @@ public partial class BackOfficeViewModel : BaseViewModel
     private void CloseAndArchiveEvent()
     {
         if (!Confirm("Chiudere e archiviare l'evento corrente?\nIl database verrà rinominato e spostato nell'archivio.")) return;
-        var path = _events.CloseAndArchive();
-        LoadEventInfo();
-        StatusMessage = $"Evento archiviato: {System.IO.Path.GetFileName(path)}";
+        _events.CloseAndArchive();
+        EventArchived?.Invoke();
     }
 
     [RelayCommand]
-    private void OpenArchivedEvent((string Name, string Path, DateTime Date) ev)
+    private void RestoreBackup(BackupInfo backup)
     {
-        if (!Confirm($"Riaprire l'evento \"{ev.Name}\"?\nL'evento corrente verrà chiuso.")) return;
-        _events.OpenEvent(ev.Name, ev.Path);
-        LoadEventInfo();
-        StatusMessage = $"Evento \"{ev.Name}\" riaperto.";
+        if (!Confirm($"Ripristinare il backup del {backup.Date:dd/MM/yyyy HH:mm}?\nI dati correnti dell'evento verranno sostituiti.")) return;
+        _events.RestoreFromBackup(backup.Path);
+        EventRestored?.Invoke();
     }
 
     // ── Settings ──────────────────────────────────────────────────────────
@@ -122,12 +125,14 @@ public partial class BackOfficeViewModel : BaseViewModel
 
     private void LoadPaymentMethods() => PaymentMethods = new(_config.LoadPaymentMethods());
 
-    [RelayCommand] private void AddPaymentMethod()
+    [RelayCommand]
+    private void AddPaymentMethod()
         => PaymentMethods.Add(new PaymentMethod { Key = $"method{PaymentMethods.Count + 1}", Label = "Nuovo", IsActive = true, SortOrder = PaymentMethods.Count });
 
     [RelayCommand] private void RemovePaymentMethod(PaymentMethod pm) => PaymentMethods.Remove(pm);
 
-    [RelayCommand] private void SavePaymentMethods()
+    [RelayCommand]
+    private void SavePaymentMethods()
     {
         _config.SavePaymentMethods([.. PaymentMethods]);
         StatusMessage = "Metodi di pagamento salvati.";
@@ -147,12 +152,15 @@ public partial class BackOfficeViewModel : BaseViewModel
         PrintPrices = c.PrintPrices; PrintDeptSubtotals = c.PrintDepartmentSubtotals;
     }
 
-    [RelayCommand] private void SaveReceiptConfig()
+    [RelayCommand]
+    private void SaveReceiptConfig()
     {
         _config.SaveReceiptConfig(new ReceiptConfig
         {
-            HeaderText = ReceiptHeader, FooterText = ReceiptFooter,
-            PrintPrices = PrintPrices, PrintDepartmentSubtotals = PrintDeptSubtotals
+            HeaderText = ReceiptHeader,
+            FooterText = ReceiptFooter,
+            PrintPrices = PrintPrices,
+            PrintDepartmentSubtotals = PrintDeptSubtotals
         });
         StatusMessage = "Configurazione scontrino salvata.";
     }
@@ -163,13 +171,17 @@ public partial class BackOfficeViewModel : BaseViewModel
 
     // ── Backup ────────────────────────────────────────────────────────────
 
-    [RelayCommand] private void RunManualBackup()
+    [RelayCommand]
+    private void RunManualBackup()
     {
         var p = _backup.RunBackup();
-        StatusMessage = string.IsNullOrEmpty(p) ? "Nessun evento attivo." : $"Backup: {System.IO.Path.GetFileName(p)}";
+        if (string.IsNullOrEmpty(p)) { StatusMessage = "Nessun evento attivo."; return; }
+        LoadEventInfo();
+        StatusMessage = $"Backup: {System.IO.Path.GetFileName(p)}";
     }
 
-    [RelayCommand] private void BackupToUsb()
+    [RelayCommand]
+    private void BackupToUsb()
     {
         var d = _usb.GetFirstUsb();
         if (d == null) { ShowError("Nessuna chiavetta USB trovata."); return; }
@@ -179,7 +191,8 @@ public partial class BackOfficeViewModel : BaseViewModel
 
     // ── USB config ────────────────────────────────────────────────────────
 
-    [RelayCommand] private void ExportConfigToUsb()
+    [RelayCommand]
+    private void ExportConfigToUsb()
     {
         var d = _usb.GetFirstUsb();
         if (d == null) { ShowError("Nessuna chiavetta USB trovata."); return; }
@@ -187,7 +200,8 @@ public partial class BackOfficeViewModel : BaseViewModel
         StatusMessage = $"Configurazione esportata su {d.Name}.";
     }
 
-    [RelayCommand] private void ImportConfigFromUsb()
+    [RelayCommand]
+    private void ImportConfigFromUsb()
     {
         var d = _usb.GetFirstUsb();
         if (d == null) { ShowError("Nessuna chiavetta USB trovata."); return; }

@@ -17,7 +17,7 @@ public class CassaDbContext : DbContext
     protected override void OnConfiguring(DbContextOptionsBuilder o)
     {
         if (!o.IsConfigured)
-            o.UseSqlite($"Data Source={_dbPath}");
+            o.UseSqlite($"Data Source={_dbPath};Pooling=False");
     }
 
     protected override void OnModelCreating(ModelBuilder m)

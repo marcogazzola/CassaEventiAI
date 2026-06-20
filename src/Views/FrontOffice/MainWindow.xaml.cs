@@ -62,6 +62,20 @@ public partial class MainWindow : Window
             var bo = App.Services.GetRequiredService<BackOfficeWindow>();
             bo.Owner = this;
             bo.ShowDialog();
+            if (bo.ShouldNavigateToStartup)
+            {
+                App.Services.GetRequiredService<AuthService>().Logout();
+                var startup = App.Services.GetRequiredService<StartupWindow>();
+                startup.Show();
+                startup.Activate();
+                Close();
+
+                // var startup = App.Services.GetRequiredService<StartupWindow>();
+                // startup.Show();
+                // startup.Activate();
+                // Close();
+                return;
+            }
             _vm.ReloadProductsCommand.Execute(null);
         }
         catch (Exception ex)
@@ -128,6 +142,7 @@ public partial class MainWindow : Window
                 App.Services.GetRequiredService<AuthService>().Logout();
                 var startup = App.Services.GetRequiredService<StartupWindow>();
                 startup.Show();
+                startup.Activate();
                 Close();
             }
             catch (Exception ex)

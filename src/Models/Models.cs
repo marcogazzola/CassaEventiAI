@@ -4,6 +4,21 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace CassaEventiAI.Models;
 
+// ── View Models ───────────────────────────────────────────────────────────
+
+public class ArchivedEventInfo
+{
+    public string Name { get; init; } = string.Empty;
+    public string Path { get; init; } = string.Empty;
+    public DateTime Date { get; init; }
+}
+
+public class BackupInfo
+{
+    public string Path { get; init; } = string.Empty;
+    public DateTime Date { get; init; }
+}
+
 // ── DB Entities ───────────────────────────────────────────────────────────
 
 public class Sale
