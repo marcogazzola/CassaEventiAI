@@ -35,7 +35,7 @@ VersionInfoCompany={#AppPublisher}
 Name: "italian"; MessagesFile: "compiler:Languages\Italian.isl"
 
 [Tasks]
-Name: "desktopicon"; Description: "Crea icona sul {cm:DesktopName}"; GroupDescription: "{cm:AdditionalIcons}"
+Name: "desktopicon"; Description: "Crea icona sul Desktop"; GroupDescription: "Icone aggiuntive:"
 
 [Files]
 Source: "..\publish\{#AppExeName}"; DestDir: "{app}"; Flags: ignoreversion
