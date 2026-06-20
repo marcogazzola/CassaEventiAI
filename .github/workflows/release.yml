@@ -3,7 +3,7 @@ name: Build and Release
 on:
   push:
     tags:
-      - 'v*.*.*'
+      - 'v[0-9]+.[0-9]+.[0-9]+'
 
 permissions:
   contents: write
@@ -20,33 +20,35 @@ jobs:
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '10.0.x'
-          include-prerelease: true
 
       - name: Extract version from tag
         id: version
         shell: bash
         run: echo "VERSION=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
 
-      - name: Publish
-        shell: bash
+      - name: Restore dependencies
+        run: dotnet restore src/CassaEventiAI.csproj
+
+      - name: Publish (self-contained single file)
+        shell: pwsh
         run: |
-          dotnet publish src/CassaEventiAI.csproj \
-            -c Release \
-            -r win-x64 \
-            --self-contained \
-            -p:PublishSingleFile=true \
-            -p:IncludeNativeLibrariesForSelfExtract=true \
-            -p:Version=${{ steps.version.outputs.VERSION }} \
-            -p:FileVersion=${{ steps.version.outputs.VERSION }}.0 \
-            -p:AssemblyVersion=${{ steps.version.outputs.VERSION }}.0 \
+          dotnet publish src/CassaEventiAI.csproj `
+            -c Release `
+            -r win-x64 `
+            --self-contained `
+            -p:PublishSingleFile=true `
+            -p:IncludeNativeLibrariesForSelfExtract=true `
+            -p:Version=${{ steps.version.outputs.VERSION }} `
+            -p:FileVersion=${{ steps.version.outputs.VERSION }}.0 `
+            -p:AssemblyVersion=${{ steps.version.outputs.VERSION }}.0 `
             -o publish
 
-      - name: Build installer
-        shell: bash
+      - name: Build installer with Inno Setup
+        shell: pwsh
         run: |
-          iscc \
-            "/DAppVersion=${{ steps.version.outputs.VERSION }}" \
-            installer/setup.iss
+          & "${env:ProgramFiles(x86)}\Inno Setup 6\iscc.exe" `
+            /DAppVersion=${{ steps.version.outputs.VERSION }} `
+            installer\setup.iss
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
@@ -54,3 +56,5 @@ jobs:
           name: "v${{ steps.version.outputs.VERSION }}"
           files: installer/Output/CassaEventiAI_Setup_${{ steps.version.outputs.VERSION }}.exe
           generate_release_notes: true
+          draft: false
+          prerelease: false
