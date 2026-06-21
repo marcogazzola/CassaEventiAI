@@ -119,7 +119,7 @@ public class ConfigService
 
     public void ExportToUsb(string usbPath)
     {
-        var dest = Path.Combine(usbPath, "CplCassaConfig");
+        var dest = Path.Combine(usbPath, "CassaEventiAIConfig");
         Directory.CreateDirectory(dest);
         foreach (var f in Directory.GetFiles(DataFolder, "*.json"))
             File.Copy(f, Path.Combine(dest, Path.GetFileName(f)), overwrite: true);
@@ -127,9 +127,9 @@ public class ConfigService
 
     public void ImportFromUsb(string usbPath)
     {
-        var src = Path.Combine(usbPath, "CplCassaConfig");
+        var src = Path.Combine(usbPath, "CassaEventiAIConfig");
         if (!Directory.Exists(src))
-            throw new DirectoryNotFoundException("Cartella CplCassaConfig non trovata nella chiavetta.");
+            throw new DirectoryNotFoundException("Cartella CassaEventiAIConfig non trovata nella chiavetta.");
         foreach (var f in Directory.GetFiles(src, "*.json"))
             File.Copy(f, Path.Combine(DataFolder, Path.GetFileName(f)), overwrite: true);
     }

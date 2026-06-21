@@ -2,7 +2,7 @@
   #define AppVersion "1.0.0"
 #endif
 
-#define AppName      "CPL Cassa Eventi"
+#define AppName      "Cassa Eventi AI"
 #define AppPublisher "MarcoGazzola.com"
 #define AppExeName   "CassaEventiAI.exe"
 #define AppId        "3F8A1C6E-9B2D-4E7A-8F0C-2D5E9A3B6F1C"
@@ -21,7 +21,7 @@ PrivilegesRequired=lowest
 OutputDir=Output
 OutputBaseFilename=CassaEventiAI_Setup_{#AppVersion}
 SetupIconFile=..\src\Resources\cassa.ico
-Compression=lzma2/ultra64
+Compression=lzma2/ultra
 SolidCompression=yes
 WizardStyle=modern
 CloseApplications=yes

@@ -68,19 +68,20 @@ public class UpdateService
         response.EnsureSuccessStatusCode();
         var total = response.Content.Headers.ContentLength ?? -1L;
 
-        await using var stream = await response.Content.ReadAsStreamAsync();
-        await using var file = File.Create(tempPath);
-
-        var buffer = new byte[65536];
-        long downloaded = 0;
-        int read;
-        while ((read = await stream.ReadAsync(buffer)) > 0)
+        await using (var stream = await response.Content.ReadAsStreamAsync())
+        await using (var file = File.Create(tempPath))
         {
-            await file.WriteAsync(buffer.AsMemory(0, read));
-            downloaded += read;
-            if (total > 0) onProgress?.Invoke((int)(downloaded * 100 / total));
+            var buffer = new byte[65536];
+            long downloaded = 0;
+            int read;
+            while ((read = await stream.ReadAsync(buffer)) > 0)
+            {
+                await file.WriteAsync(buffer.AsMemory(0, read));
+                downloaded += read;
+                if (total > 0) onProgress?.Invoke((int)(downloaded * 100 / total));
+            }
+            await file.FlushAsync();
         }
-        await file.FlushAsync();
 
         Process.Start(new ProcessStartInfo(tempPath) { UseShellExecute = true });
     }

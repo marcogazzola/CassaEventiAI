@@ -65,7 +65,7 @@ public class BackupService(ConfigService config) : IDisposable
         if (string.IsNullOrEmpty(settings.ActiveDbPath))
             throw new InvalidOperationException("Nessun evento attivo.");
 
-        var dest = Path.Combine(usbPath, "CplCassaBackup");
+        var dest = Path.Combine(usbPath, "CassaEventiAIBackup");
         Directory.CreateDirectory(dest);
 
         var fileName = $"{Path.GetFileNameWithoutExtension(settings.ActiveDbPath)}_{DateTime.Now:yyyyMMdd_HHmm}.db";
