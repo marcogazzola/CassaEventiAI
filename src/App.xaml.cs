@@ -18,6 +18,7 @@ public partial class App : System.Windows.Application
 
     protected override void OnStartup(StartupEventArgs e)
     {
+        System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
         base.OnStartup(e);
         var services = new ServiceCollection();
         ConfigureServices(services);

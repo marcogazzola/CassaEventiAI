@@ -19,14 +19,14 @@ public class ReceiptService(ConfigService config)
     {
         var cfg = config.LoadReceiptConfig();
         var lines = new List<string>();
-        const string PAPER_CUT = "\x1D\x56\x41"; // ESC/POS thermal paper cut command
+        const string CutMark = "\x1E"; // section separator – PrintingService converts this to a real cut
 
         // ═════════════════════════════════════════════════════════════
         // SEZIONE 1: SCONTRINO FISCALE
         // ═════════════════════════════════════════════════════════════
 
         if (!string.IsNullOrWhiteSpace(cfg.HeaderText))
-            lines.AddRange(cfg.HeaderText.Split('\n').Select(l => l.Trim()));
+            lines.AddRange(WrapAndCenter(cfg.HeaderText, 40));
 
         lines.Add(string.Empty);
         lines.Add($"Scontrino #{sale.Id:D4}   {sale.CreatedAt:dd/MM/yy HH:mm}");
@@ -54,7 +54,8 @@ public class ReceiptService(ConfigService config)
         {
             if (sale.DiscountPct > 0)
                 lines.Add(FormatAmountLine($"Sconto {sale.DiscountPct:F0}%", -sale.Subtotal * sale.DiscountPct / 100));
-            
+
+            lines.Add(new string('-', 40));
             lines.Add(FormatAmountLine("TOTALE EUR", sale.Total));
             
             // if (sale.PaymentMethodKey == "cash")
@@ -66,10 +67,12 @@ public class ReceiptService(ConfigService config)
 
         lines.Add(string.Empty);
         if (!string.IsNullOrWhiteSpace(cfg.FooterText))
-            lines.AddRange(cfg.FooterText.Split('\n').Select(l => l.Trim()));
+            lines.AddRange(WrapAndCenter(cfg.FooterText, 40));
 
         lines.Add(string.Empty);
-        lines.Add(PAPER_CUT);
+        lines.Add(string.Empty);
+        lines.Add(string.Empty);
+        lines.Add(CutMark);
 
         // ═════════════════════════════════════════════════════════════
         // SEZIONI 2+: SCONTRINI PER REPARTO (solo se abilitato)
@@ -90,7 +93,7 @@ public class ReceiptService(ConfigService config)
 
                 lines.Add(string.Empty);
                 if (!string.IsNullOrWhiteSpace(cfg.HeaderText))
-                    lines.AddRange(cfg.HeaderText.Split('\n').Select(l => l.Trim()));
+                    lines.AddRange(WrapAndCenter(cfg.HeaderText, 40));
 
                 lines.Add(string.Empty);
                 lines.Add($"Scontrino #{sale.Id:D4}   {sale.CreatedAt:dd/MM/yy HH:mm}");
@@ -107,14 +110,19 @@ public class ReceiptService(ConfigService config)
 
                 lines.Add(string.Empty);
                 if (!string.IsNullOrWhiteSpace(cfg.FooterText))
-                    lines.AddRange(cfg.FooterText.Split('\n').Select(l => l.Trim()));
+                    lines.AddRange(WrapAndCenter(cfg.FooterText, 40));
 
                 lines.Add(string.Empty);
-                lines.Add(PAPER_CUT);
+                lines.Add(string.Empty);
+                lines.Add(string.Empty);
+                lines.Add(string.Empty);
+                lines.Add(string.Empty);
+                lines.Add(string.Empty);
+                lines.Add(CutMark);
             }
         }
 
-        return string.Join(Environment.NewLine, lines);
+        return string.Join(Environment.NewLine, lines.Select(l => l == CutMark ? l : "   " + l));
     }
 
     private static string FormatAmountLine(string label, decimal amount)
@@ -124,10 +132,35 @@ public class ReceiptService(ConfigService config)
         return $"{normalizedLabel.PadRight(maxLabelWidth)} {amount,7:F2}€";
     }
 
-    private static string CenterText(string text)
+    private static string CenterText(string text, int width = ReceiptLineWidth)
     {
-        var clean = text.Length > ReceiptLineWidth ? text[..ReceiptLineWidth] : text;
-        var leftPadding = Math.Max((ReceiptLineWidth - clean.Length) / 2, 0);
+        var clean = text.Length > width ? text[..width] : text;
+        var leftPadding = Math.Max((width - clean.Length) / 2, 0);
         return new string(' ', leftPadding) + clean;
+    }
+
+    private static IEnumerable<string> WrapAndCenter(string text, int maxWidth)
+    {
+        foreach (var inputLine in text.Split('\n'))
+        {
+            var words = inputLine.Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries);
+            if (words.Length == 0) { yield return string.Empty; continue; }
+
+            var current = "";
+            foreach (var word in words)
+            {
+                if (current.Length == 0)
+                    current = word;
+                else if (current.Length + 1 + word.Length <= maxWidth)
+                    current += " " + word;
+                else
+                {
+                    yield return CenterText(current, maxWidth);
+                    current = word;
+                }
+            }
+            if (current.Length > 0)
+                yield return CenterText(current, maxWidth);
+        }
     }
 }

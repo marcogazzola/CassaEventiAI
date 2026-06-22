@@ -1,11 +1,17 @@
 {
-    "version": "0.2.0",
-    "configurations": [
-        {
-            "name": "CassaEventiAI (Debug)",
-            "type": "dotnet",
-            "request": "launch",
-            "projectPath": "${workspaceFolder}/src/CassaEventiAI.csproj"
-        }
-    ]
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "CassaEventiAI (Debug)",
+      "type": "coreclr",
+      "request": "launch",
+      "preLaunchTask": "build",
+      "program": "${workspaceFolder}/src/bin/Debug/net10.0-windows/CassaEventiAI.exe",
+      "args": [],
+      "cwd": "${workspaceFolder}/src",
+      "stopAtEntry": false,
+      "console": "internalConsole",
+      "justMyCode": true
+    }
+  ]
 }

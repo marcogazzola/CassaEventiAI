@@ -13,7 +13,7 @@
                  Grid.Row="0"
                  IsReadOnly="True"
                  FontFamily="Consolas"
-                 FontSize="13"
+                 FontSize="14"
                  TextWrapping="NoWrap"
                  VerticalScrollBarVisibility="Auto"
                  HorizontalScrollBarVisibility="Auto"/>
