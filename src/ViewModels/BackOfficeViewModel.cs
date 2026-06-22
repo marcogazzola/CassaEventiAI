@@ -142,6 +142,10 @@ public partial class BackOfficeViewModel : BaseViewModel
 
     [ObservableProperty] private string _receiptHeader = string.Empty;
     [ObservableProperty] private string _receiptFooter = string.Empty;
+    [ObservableProperty] private string _extraFooterText = string.Empty;
+    [ObservableProperty] private bool _extraFooterEnabled;
+    [ObservableProperty] private bool _extraFooterOnlyFirst = true;
+    [ObservableProperty] private bool _printOperator = true;
     [ObservableProperty] private bool _printPrices = true;
     [ObservableProperty] private bool _printDeptSubtotals;
 
@@ -149,6 +153,10 @@ public partial class BackOfficeViewModel : BaseViewModel
     {
         var c = _config.LoadReceiptConfig();
         ReceiptHeader = c.HeaderText; ReceiptFooter = c.FooterText;
+        ExtraFooterText = c.ExtraFooterText;
+        ExtraFooterEnabled = c.ExtraFooterEnabled;
+        ExtraFooterOnlyFirst = c.ExtraFooterOnlyFirst;
+        PrintOperator = c.PrintOperator;
         PrintPrices = c.PrintPrices; PrintDeptSubtotals = c.PrintDepartmentSubtotals;
     }
 
@@ -159,6 +167,10 @@ public partial class BackOfficeViewModel : BaseViewModel
         {
             HeaderText = ReceiptHeader,
             FooterText = ReceiptFooter,
+            ExtraFooterText = ExtraFooterText,
+            ExtraFooterEnabled = ExtraFooterEnabled,
+            ExtraFooterOnlyFirst = ExtraFooterOnlyFirst,
+            PrintOperator = PrintOperator,
             PrintPrices = PrintPrices,
             PrintDepartmentSubtotals = PrintDeptSubtotals
         });

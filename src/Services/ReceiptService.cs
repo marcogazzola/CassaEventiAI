@@ -8,10 +8,14 @@ namespace CassaEventiAI.Services;
 /// </summary>
 public class ReceiptService(ConfigService config)
 {
-    private const int ReceiptLineWidth = 38;
-    private const int AmountWidth = 7;
+    private const int ReceiptLineWidth = 27;
+    private const int ReceiptBoldLineWidth = 20;
+    private const int ReceiptSmallLineWidth = 38;
+    private const int AmountWidth = 6;
     private const string BoldOn = "\x1B\x45\x01";
     private const string BoldOff = "\x1B\x45\x00";
+    private const string SmallOn = "\x0E"; // marks line as 10pt (extra footer)
+    private const string ReceiptDetaiRow = "\x1A\x50"; // marks line as 10pt (extra footer)
 
     public ReceiptConfig GetConfig() => config.LoadReceiptConfig();
 
@@ -26,15 +30,18 @@ public class ReceiptService(ConfigService config)
         // ═════════════════════════════════════════════════════════════
 
         if (!string.IsNullOrWhiteSpace(cfg.HeaderText))
-            lines.AddRange(WrapAndCenter(cfg.HeaderText, 40));
+            lines.AddRange(WrapAndCenter(cfg.HeaderText, ReceiptLineWidth));
 
         lines.Add(string.Empty);
-        lines.Add($"Scontrino #{sale.Id:D4}   {sale.CreatedAt:dd/MM/yy HH:mm}");
-        lines.Add($"Operatore: {sale.OperatorName}");
+        lines.Add(CenterText($"Scontrino #{sale.Id:D4}"));
+        if (cfg.PrintOperator)
+            lines.Add($"Operatore: {sale.OperatorName}");
+        lines.AddRange(WrapAndCenter($"{sale.CreatedAt:dd/MM/yy HH:mm}", ReceiptLineWidth));
         lines.Add(string.Empty);
 
         if (cfg.PrintPrices)
-            lines.Add("Q.tà  Articolo          Prezzo   Totale");
+            lines.Add($"{"#",-2} {"Articolo",-18} {"Tot",(AmountWidth)}");
+        lines.Add(string.Empty);
 
         var items = filterDepts != null
             ? sale.Items.Where(i => filterDepts.Any(d => d.Id == i.DepartmentId))
@@ -42,10 +49,10 @@ public class ReceiptService(ConfigService config)
 
         foreach (var item in items)
         {
-            var name = item.ProductName.Length > 15 ? item.ProductName[..15] : item.ProductName;
+            var name = item.ProductName.Length > 18 ? item.ProductName[..18] : item.ProductName;
             var line = cfg.PrintPrices
-                ? $"{item.Quantity,4}  {name, -15} {item.UnitPrice,7:F2}€ {item.LineTotal,7:F2}€"
-                : $"{item.Quantity} {name}";
+                ? $"{ReceiptDetaiRow}{item.Quantity,2} {name,-18} {item.LineTotal,(AmountWidth):F2}"
+                : $"{ReceiptDetaiRow}{item.Quantity} {name}";
             lines.Add(line);
         }
 
@@ -55,9 +62,9 @@ public class ReceiptService(ConfigService config)
             if (sale.DiscountPct > 0)
                 lines.Add(FormatAmountLine($"Sconto {sale.DiscountPct:F0}%", -sale.Subtotal * sale.DiscountPct / 100));
 
-            lines.Add(new string('-', 40));
-            lines.Add(FormatAmountLine("TOTALE EUR", sale.Total));
-            
+            lines.Add(new string('-', ReceiptLineWidth));
+            lines.Add(FormatAmountLine("TOTALE", sale.Total));
+
             // if (sale.PaymentMethodKey == "cash")
             // {
             //     lines.Add(FormatAmountLine("Pagato", sale.CashGiven));
@@ -66,12 +73,18 @@ public class ReceiptService(ConfigService config)
         }
 
         lines.Add(string.Empty);
+        lines.Add(string.Empty);
         if (!string.IsNullOrWhiteSpace(cfg.FooterText))
-            lines.AddRange(WrapAndCenter(cfg.FooterText, 40));
+            lines.AddRange(WrapAndCenter(cfg.FooterText, ReceiptLineWidth));
 
-        lines.Add(string.Empty);
-        lines.Add(string.Empty);
-        lines.Add(string.Empty);
+        if (cfg.ExtraFooterEnabled && !string.IsNullOrWhiteSpace(cfg.ExtraFooterText))
+        {
+            lines.Add(string.Empty);
+            lines.AddRange(WrapAndCenter(cfg.ExtraFooterText, ReceiptSmallLineWidth).Select(l => SmallOn + l));
+        }
+
+        // lines.Add(string.Empty);
+        // lines.Add(string.Empty);
         lines.Add(CutMark);
 
         // ═════════════════════════════════════════════════════════════
@@ -93,43 +106,48 @@ public class ReceiptService(ConfigService config)
 
                 lines.Add(string.Empty);
                 if (!string.IsNullOrWhiteSpace(cfg.HeaderText))
-                    lines.AddRange(WrapAndCenter(cfg.HeaderText, 40));
+                    lines.AddRange(WrapAndCenter(cfg.HeaderText, ReceiptLineWidth));
 
                 lines.Add(string.Empty);
-                lines.Add($"Scontrino #{sale.Id:D4}   {sale.CreatedAt:dd/MM/yy HH:mm}");
-                lines.Add($"Operatore: {sale.OperatorName}");
+                lines.Add(CenterText($"Scontrino #{sale.Id:D4}"));
+                if (cfg.PrintOperator)
+                    lines.Add($"Operatore: {sale.OperatorName}");
+                lines.AddRange(WrapAndCenter($"{sale.CreatedAt:dd/MM/yy HH:mm}", ReceiptLineWidth));
                 lines.Add(string.Empty);
-                lines.Add($"{BoldOn}{CenterText(deptGroup.Key.DepartmentName.ToUpperInvariant())}{BoldOff}");
+                lines.Add($"{BoldOn}{(CenterText($" **** {deptGroup.Key.DepartmentName.ToUpperInvariant()} **** ", ReceiptBoldLineWidth))}{BoldOff}");
                 lines.Add(string.Empty);
 
                 foreach (var item in deptGroup.OrderBy(i => i.ProductName))
                 {
-                    var name = item.ProductName.Length > 20 ? item.ProductName[..20] : item.ProductName;
-                    lines.Add($"  {item.Quantity} {name}");
+                    var name = item.ProductName.Length > 23 ? item.ProductName[..23] : item.ProductName;
+                    lines.Add(CenterText($"{item.Quantity,3} {name}", ReceiptLineWidth));
                 }
 
                 lines.Add(string.Empty);
+                lines.Add(string.Empty);
                 if (!string.IsNullOrWhiteSpace(cfg.FooterText))
-                    lines.AddRange(WrapAndCenter(cfg.FooterText, 40));
+                    lines.AddRange(WrapAndCenter(cfg.FooterText, ReceiptLineWidth));
 
-                lines.Add(string.Empty);
-                lines.Add(string.Empty);
-                lines.Add(string.Empty);
-                lines.Add(string.Empty);
-                lines.Add(string.Empty);
-                lines.Add(string.Empty);
+                if (cfg.ExtraFooterEnabled && !cfg.ExtraFooterOnlyFirst && !string.IsNullOrWhiteSpace(cfg.ExtraFooterText))
+                {
+                    lines.Add(string.Empty);
+                    lines.AddRange(WrapAndCenter(cfg.ExtraFooterText, ReceiptSmallLineWidth).Select(l => SmallOn + l));
+                }
+
+                // lines.Add(string.Empty);
+                // lines.Add(string.Empty);
                 lines.Add(CutMark);
             }
         }
 
-        return string.Join(Environment.NewLine, lines.Select(l => l == CutMark ? l : "   " + l));
+        return string.Join(Environment.NewLine, lines.Select(l => l == CutMark ? l:(l.Contains(ReceiptDetaiRow)?l.Replace(ReceiptDetaiRow, "") : " " + l)));
     }
 
     private static string FormatAmountLine(string label, decimal amount)
     {
-        var maxLabelWidth = ReceiptLineWidth - AmountWidth - 1;
+        var maxLabelWidth = ReceiptLineWidth - AmountWidth - 2;
         var normalizedLabel = label.Length > maxLabelWidth ? label[..maxLabelWidth] : label;
-        return $"{normalizedLabel.PadRight(maxLabelWidth)} {amount,7:F2}€";
+        return $"{normalizedLabel.PadRight(maxLabelWidth)} {amount,(AmountWidth):F2}€";
     }
 
     private static string CenterText(string text, int width = ReceiptLineWidth)

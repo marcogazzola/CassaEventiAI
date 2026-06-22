@@ -23,7 +23,7 @@ public partial class DepartmentsViewModel(ProductService products) : BaseViewMod
     [RelayCommand] private void New()
     {
         Selected = null; EditName = ""; EditColor = "#378ADD"; EditIsActive = true;
-        EditPrintSeparate = false; EditSortOrder = Departments.Count; IsNew = true; IsEditing = true;
+        EditPrintSeparate = true; EditSortOrder = Departments.Count; IsNew = true; IsEditing = true;
     }
 
     [RelayCommand] private void Edit(Department d)

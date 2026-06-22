@@ -104,8 +104,9 @@
                         <StackPanel>
                             <TextBlock Text="Modifica reparto" FontSize="14" FontWeight="SemiBold"
                                        Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,14"/>
-                            <TextBlock Text="Nome *" FontSize="12" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,4"/>
+                            <TextBlock Text="Nome * (max 15 caratteri)" FontSize="12" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,4"/>
                             <TextBox Text="{Binding EditName, UpdateSourceTrigger=PropertyChanged}"
+                                     MaxLength="15"
                                      Height="34" Padding="8,0" Margin="0,0,0,10" VerticalContentAlignment="Center"/>
                             <TextBlock Text="Colore" FontSize="12" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,4"/>
                             <Grid Margin="0,0,0,10">
@@ -206,15 +207,16 @@
                         <StackPanel>
                             <TextBlock Text="Modifica articolo" FontSize="14" FontWeight="SemiBold"
                                        Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,14"/>
-                            <TextBlock Text="Nome *" FontSize="12" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,4"/>
+                            <TextBlock Text="Nome * (max 18 caratteri)" FontSize="12" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,4"/>
                             <TextBox Text="{Binding EditName, UpdateSourceTrigger=PropertyChanged}"
+                                     MaxLength="18"
                                      Height="34" Padding="8,0" Margin="0,0,0,10" VerticalContentAlignment="Center"/>
                             <TextBlock Text="Prezzo €" FontSize="12" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,4"/>
                             <TextBox Text="{Binding EditPrice, UpdateSourceTrigger=PropertyChanged}"
                                      Height="34" Padding="8,0" Margin="0,0,0,10" VerticalContentAlignment="Center"/>
                             <TextBlock Text="Reparto *" FontSize="12" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,4"/>
-                            <ComboBox ItemsSource="{Binding Departments}" Height="34" VerticalAlignment="Center"
-                                      SelectedValuePath="Id" SelectedValue="{Binding EditDeptId}"
+                            <ComboBox ItemsSource="{Binding EditDepartments}" Height="34" VerticalAlignment="Center"
+                                      SelectedItem="{Binding EditSelectedDept}"
                                       DisplayMemberPath="Name" Margin="0,0,0,10"/>
                             <TextBlock Text="Ordine" FontSize="12" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,4"/>
                             <TextBox Text="{Binding EditSortOrder, UpdateSourceTrigger=PropertyChanged}"
@@ -239,6 +241,154 @@
                         </StackPanel>
                     </Border>
                 </Grid>
+            </TabItem>
+
+            <!-- ═══ TAB: METODI DI PAGAMENTO ═════════════════════════════ -->
+            <TabItem Header="Pagamenti">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel Margin="10" MaxWidth="700">
+                        <TextBlock Text="Metodi di pagamento" FontSize="14" FontWeight="SemiBold"
+                                   Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,10"/>
+                        <Border Style="{StaticResource Card}" Margin="0,0,0,14">
+                            <StackPanel>
+                                <Grid Margin="0,0,0,6">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="110"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="62"/>
+                                        <ColumnDefinition Width="80"/>
+                                        <ColumnDefinition Width="30"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0" Text="Chiave" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}"/>
+                                    <TextBlock Grid.Column="1" Text="Etichetta" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" Margin="6,0,0,0"/>
+                                    <TextBlock Grid.Column="2" Text="Attivo" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" Margin="4,0"/>
+                                    <TextBlock Grid.Column="3" Text="Contanti" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}"/>
+                                </Grid>
+                                <ItemsControl ItemsSource="{Binding PaymentMethods}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Grid Margin="0,4">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="110"/>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="62"/>
+                                                    <ColumnDefinition Width="80"/>
+                                                    <ColumnDefinition Width="30"/>
+                                                </Grid.ColumnDefinitions>
+                                                <TextBox Grid.Column="0" Text="{Binding Key}" Height="30" Padding="6,0"
+                                                         VerticalContentAlignment="Center" Margin="0,0,6,0" FontSize="11"/>
+                                                <TextBox Grid.Column="1" Text="{Binding Label}" Height="30" Padding="6,0"
+                                                         VerticalContentAlignment="Center" Margin="0,0,6,0"/>
+                                                <CheckBox Grid.Column="2" IsChecked="{Binding IsActive}"
+                                                          VerticalAlignment="Center" Margin="10,0"/>
+                                                <CheckBox Grid.Column="3" IsChecked="{Binding RequiresCashInput}"
+                                                          VerticalAlignment="Center"/>
+                                                <Button Grid.Column="4" Content="✕" Style="{StaticResource DangerButton}"
+                                                        Width="26" Height="26" Padding="0" FontSize="11"
+                                                        Command="{Binding DataContext.RemovePaymentMethodCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                        CommandParameter="{Binding}"/>
+                                            </Grid>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                                <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
+                                    <Button Content="+ Aggiungi" Style="{StaticResource PrimaryButton}" Padding="10,6" Margin="0,0,8,0"
+                                            Command="{Binding AddPaymentMethodCommand}"/>
+                                    <Button Content="Salva metodi" Style="{StaticResource SuccessButton}" Padding="10,6"
+                                            Command="{Binding SavePaymentMethodsCommand}"/>
+                                </StackPanel>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+
+            <!-- ═══ TAB: CONFIGURAZIONE ══════════════════════════════════ -->
+            <TabItem Header="Configurazione">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel Margin="10" MaxWidth="700">
+
+                        <!-- Impostazioni generali -->
+                        <TextBlock Text="Impostazioni generali" FontSize="14" FontWeight="SemiBold"
+                                   Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,10"/>
+                        <Border Style="{StaticResource Card}" Margin="0,0,0,14">
+                            <Grid>
+                                <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="200"/></Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="40"/>
+                                    <RowDefinition Height="40"/>
+                                </Grid.RowDefinitions>
+                                <TextBlock Grid.Row="0" Text="Mostra totale nel footer" VerticalAlignment="Center" Foreground="{StaticResource TextSecondaryBrush}"/>
+                                <CheckBox Grid.Row="0" Grid.Column="1" VerticalAlignment="Center" IsChecked="{Binding ShowTotalInFooter}"/>
+                                <TextBlock Grid.Row="1" Text="Modalità kiosk (schermo intero)" VerticalAlignment="Center" Foreground="{StaticResource TextSecondaryBrush}"/>
+                                <CheckBox Grid.Row="1" Grid.Column="1" VerticalAlignment="Center" IsChecked="{Binding KioskMode}"/>
+                            </Grid>
+                        </Border>
+                        <Button Content="Salva impostazioni" Style="{StaticResource PrimaryButton}" Padding="12,7"
+                                Margin="0,0,0,14" HorizontalAlignment="Left" Command="{Binding SaveSettingsCommand}"/>
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+
+            <!-- ═══ TAB: STAMPA ═══════════════════════════════════════════ -->
+            <TabItem Header="Stampa">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel Margin="10" MaxWidth="700">
+
+                        <!-- Stampante -->
+                        <TextBlock Text="Stampante" FontSize="14" FontWeight="SemiBold"
+                                   Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,10"/>
+                        <Border Style="{StaticResource Card}" Margin="0,0,0,10">
+                            <Grid>
+                                <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="200"/></Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="40"/>
+                                    <RowDefinition Height="40"/>
+                                </Grid.RowDefinitions>
+                                <TextBlock Grid.Row="0" Text="Stampante configurata" VerticalAlignment="Center" Foreground="{StaticResource TextSecondaryBrush}"/>
+                                <ComboBox Grid.Row="0" Grid.Column="1" Height="30" VerticalAlignment="Center"
+                                          ItemsSource="{Binding AvailablePrinters}"
+                                          SelectedItem="{Binding SelectedPrinter}"/>
+                                <TextBlock Grid.Row="1" Text="Stampante abilitata" VerticalAlignment="Center" Foreground="{StaticResource TextSecondaryBrush}"/>
+                                <CheckBox Grid.Row="1" Grid.Column="1" VerticalAlignment="Center" IsChecked="{Binding PrinterEnabled}"/>
+                            </Grid>
+                        </Border>
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,20">
+                            <Button Content="Salva impostazioni" Style="{StaticResource PrimaryButton}" Padding="12,7" Margin="0,0,8,0" Command="{Binding SaveSettingsCommand}"/>
+                            <Button Content="Test stampante" Style="{StaticResource DeptTabButton}" Padding="12,7" Command="{Binding TestPrintCommand}"/>
+                        </StackPanel>
+
+                        <!-- Configurazione scontrino -->
+                        <TextBlock Text="Configurazione scontrino" FontSize="14" FontWeight="SemiBold"
+                                   Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,10"/>
+                        <Border Style="{StaticResource Card}" Margin="0,0,0,14">
+                            <StackPanel>
+                                <TextBlock Text="Testo intestazione" FontSize="12" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,4"/>
+                                <TextBox Text="{Binding ReceiptHeader}" Height="64" TextWrapping="Wrap"
+                                         AcceptsReturn="True" Padding="8" Margin="0,0,0,10"/>
+                                <TextBlock Text="Testo piè di pagina" FontSize="12" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,4"/>
+                                <TextBox Text="{Binding ReceiptFooter}" Height="64" TextWrapping="Wrap"
+                                         AcceptsReturn="True" Padding="8" Margin="0,0,0,10"/>
+                                <TextBlock Text="Extra footer (testo legale, font piccolo)" FontSize="12" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,4"/>
+                                <TextBox Text="{Binding ExtraFooterText}" Height="72" TextWrapping="Wrap"
+                                         AcceptsReturn="True" Padding="8" Margin="0,0,0,8"/>
+                                <CheckBox Content="Abilita extra footer" IsChecked="{Binding ExtraFooterEnabled}"
+                                          Margin="0,0,0,6" Foreground="{StaticResource TextPrimaryBrush}"/>
+                                <CheckBox Content="Stampa solo sul primo scontrino" IsChecked="{Binding ExtraFooterOnlyFirst}"
+                                          Margin="0,0,0,12" Foreground="{StaticResource TextPrimaryBrush}"/>
+                                <CheckBox Content="Stampa nome operatore sullo scontrino" IsChecked="{Binding PrintOperator}"
+                                          Margin="0,0,0,6" Foreground="{StaticResource TextPrimaryBrush}"/>
+                                <CheckBox Content="Stampa prezzi sullo scontrino" IsChecked="{Binding PrintPrices}"
+                                          Margin="0,0,0,6" Foreground="{StaticResource TextPrimaryBrush}"/>
+                                <CheckBox Content="Stampa subtotale per reparto" IsChecked="{Binding PrintDeptSubtotals}"
+                                          Margin="0,0,0,12" Foreground="{StaticResource TextPrimaryBrush}"/>
+                                <Button Content="Salva configurazione scontrino" Style="{StaticResource PrimaryButton}"
+                                        HorizontalAlignment="Left" Padding="12,6" Command="{Binding SaveReceiptConfigCommand}"/>
+                            </StackPanel>
+                        </Border>
+
+                    </StackPanel>
+                </ScrollViewer>
             </TabItem>
 
             <!-- ═══ TAB: OPERATORI ════════════════════════════════════════ -->
@@ -330,115 +480,6 @@
                         </StackPanel>
                     </Border>
                 </Grid>
-            </TabItem>
-
-            <!-- ═══ TAB: CONFIGURAZIONE ══════════════════════════════════ -->
-            <TabItem Header="Configurazione">
-                <ScrollViewer VerticalScrollBarVisibility="Auto">
-                    <StackPanel Margin="10" MaxWidth="700">
-
-                        <!-- Scontrino -->
-                        <TextBlock Text="Configurazione scontrino" FontSize="14" FontWeight="SemiBold"
-                                   Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,10"/>
-                        <Border Style="{StaticResource Card}" Margin="0,0,0,14">
-                            <StackPanel>
-                                <TextBlock Text="Testo intestazione" FontSize="12" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,4"/>
-                                <TextBox Text="{Binding ReceiptHeader}" Height="64" TextWrapping="Wrap"
-                                         AcceptsReturn="True" Padding="8" Margin="0,0,0,10"/>
-                                <TextBlock Text="Testo piè di pagina" FontSize="12" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,4"/>
-                                <TextBox Text="{Binding ReceiptFooter}" Height="64" TextWrapping="Wrap"
-                                         AcceptsReturn="True" Padding="8" Margin="0,0,0,10"/>
-                                <CheckBox Content="Stampa prezzi sullo scontrino" IsChecked="{Binding PrintPrices}"
-                                          Margin="0,0,0,6" Foreground="{StaticResource TextPrimaryBrush}"/>
-                                <CheckBox Content="Stampa subtotale per reparto" IsChecked="{Binding PrintDeptSubtotals}"
-                                          Margin="0,0,0,12" Foreground="{StaticResource TextPrimaryBrush}"/>
-                                <Button Content="Salva configurazione scontrino" Style="{StaticResource PrimaryButton}"
-                                        HorizontalAlignment="Left" Padding="12,6" Command="{Binding SaveReceiptConfigCommand}"/>
-                            </StackPanel>
-                        </Border>
-
-                        <!-- Metodi pagamento -->
-                        <TextBlock Text="Metodi di pagamento" FontSize="14" FontWeight="SemiBold"
-                                   Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,10"/>
-                        <Border Style="{StaticResource Card}" Margin="0,0,0,14">
-                            <StackPanel>
-                                <Grid Margin="0,0,0,6">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="110"/>
-                                        <ColumnDefinition Width="*"/>
-                                        <ColumnDefinition Width="62"/>
-                                        <ColumnDefinition Width="80"/>
-                                        <ColumnDefinition Width="30"/>
-                                    </Grid.ColumnDefinitions>
-                                    <TextBlock Grid.Column="0" Text="Chiave" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}"/>
-                                    <TextBlock Grid.Column="1" Text="Etichetta" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" Margin="6,0,0,0"/>
-                                    <TextBlock Grid.Column="2" Text="Attivo" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" Margin="4,0"/>
-                                    <TextBlock Grid.Column="3" Text="Contanti" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}"/>
-                                </Grid>
-                                <ItemsControl ItemsSource="{Binding PaymentMethods}">
-                                    <ItemsControl.ItemTemplate>
-                                        <DataTemplate>
-                                            <Grid Margin="0,4">
-                                                <Grid.ColumnDefinitions>
-                                                    <ColumnDefinition Width="110"/>
-                                                    <ColumnDefinition Width="*"/>
-                                                    <ColumnDefinition Width="62"/>
-                                                    <ColumnDefinition Width="80"/>
-                                                    <ColumnDefinition Width="30"/>
-                                                </Grid.ColumnDefinitions>
-                                                <TextBox Grid.Column="0" Text="{Binding Key}" Height="30" Padding="6,0"
-                                                         VerticalContentAlignment="Center" Margin="0,0,6,0" FontSize="11"/>
-                                                <TextBox Grid.Column="1" Text="{Binding Label}" Height="30" Padding="6,0"
-                                                         VerticalContentAlignment="Center" Margin="0,0,6,0"/>
-                                                <CheckBox Grid.Column="2" IsChecked="{Binding IsActive}"
-                                                          VerticalAlignment="Center" Margin="10,0"/>
-                                                <CheckBox Grid.Column="3" IsChecked="{Binding RequiresCashInput}"
-                                                          VerticalAlignment="Center"/>
-                                                <Button Grid.Column="4" Content="✕" Style="{StaticResource DangerButton}"
-                                                        Width="26" Height="26" Padding="0" FontSize="11"
-                                                        Command="{Binding DataContext.RemovePaymentMethodCommand, RelativeSource={RelativeSource AncestorType=Window}}"
-                                                        CommandParameter="{Binding}"/>
-                                            </Grid>
-                                        </DataTemplate>
-                                    </ItemsControl.ItemTemplate>
-                                </ItemsControl>
-                                <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
-                                    <Button Content="+ Aggiungi" Style="{StaticResource PrimaryButton}" Padding="10,6" Margin="0,0,8,0"
-                                            Command="{Binding AddPaymentMethodCommand}"/>
-                                    <Button Content="Salva metodi" Style="{StaticResource SuccessButton}" Padding="10,6"
-                                            Command="{Binding SavePaymentMethodsCommand}"/>
-                                </StackPanel>
-                            </StackPanel>
-                        </Border>
-
-                        <!-- Impostazioni generali -->
-                        <TextBlock Text="Impostazioni generali" FontSize="14" FontWeight="SemiBold"
-                                   Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,10"/>
-                        <Border Style="{StaticResource Card}" Margin="0,0,0,14">
-                            <Grid>
-                                <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="200"/></Grid.ColumnDefinitions>
-                                <Grid.RowDefinitions>
-                                    <RowDefinition Height="40"/><RowDefinition Height="40"/>
-                                    <RowDefinition Height="40"/><RowDefinition Height="40"/>
-                                </Grid.RowDefinitions>
-                                <TextBlock Grid.Row="0" Text="Stampante configurata" VerticalAlignment="Center" Foreground="{StaticResource TextSecondaryBrush}"/>
-                                <ComboBox Grid.Row="0" Grid.Column="1" Height="30" VerticalAlignment="Center"
-                                          ItemsSource="{Binding AvailablePrinters}"
-                                          SelectedItem="{Binding SelectedPrinter}"/>
-                                <TextBlock Grid.Row="1" Text="Stampante abilitata" VerticalAlignment="Center" Foreground="{StaticResource TextSecondaryBrush}"/>
-                                <CheckBox Grid.Row="1" Grid.Column="1" VerticalAlignment="Center" IsChecked="{Binding PrinterEnabled}"/>
-                                <TextBlock Grid.Row="2" Text="Mostra totale nel footer" VerticalAlignment="Center" Foreground="{StaticResource TextSecondaryBrush}"/>
-                                <CheckBox Grid.Row="2" Grid.Column="1" VerticalAlignment="Center" IsChecked="{Binding ShowTotalInFooter}"/>
-                                <TextBlock Grid.Row="3" Text="Modalità kiosk (schermo intero)" VerticalAlignment="Center" Foreground="{StaticResource TextSecondaryBrush}"/>
-                                <CheckBox Grid.Row="3" Grid.Column="1" VerticalAlignment="Center" IsChecked="{Binding KioskMode}"/>
-                            </Grid>
-                        </Border>
-                        <StackPanel Orientation="Horizontal" Margin="0,0,0,14">
-                            <Button Content="Salva impostazioni" Style="{StaticResource PrimaryButton}" Padding="12,7" Margin="0,0,8,0" Command="{Binding SaveSettingsCommand}"/>
-                            <Button Content="Test stampante" Style="{StaticResource DeptTabButton}" Padding="12,7" Command="{Binding TestPrintCommand}"/>
-                        </StackPanel>
-                    </StackPanel>
-                </ScrollViewer>
             </TabItem>
 
             <!-- ═══ TAB: EVENTO & BACKUP ══════════════════════════════════ -->

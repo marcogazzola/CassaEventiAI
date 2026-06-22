@@ -76,7 +76,7 @@ public class Department
     public string Color { get; set; } = "#378ADD";
     public int SortOrder { get; set; }
     public bool IsActive { get; set; } = true;
-    public bool PrintSeparateReceipt { get; set; }
+    public bool PrintSeparateReceipt { get; set; } = true;
 }
 
 public class Product
@@ -115,6 +115,10 @@ public class ReceiptConfig
 {
     public string HeaderText { get; set; } = string.Empty;
     public string FooterText { get; set; } = string.Empty;
+    public string ExtraFooterText { get; set; } = "Erogazione a sostegno delle attività istituzionali Raccolta fondi occasionale ex. art. 7 D.Lgs. 117/2017";
+    public bool ExtraFooterEnabled { get; set; } = true;
+    public bool ExtraFooterOnlyFirst { get; set; } = true;
+    public bool PrintOperator { get; set; } = true;
     public bool PrintPrices { get; set; } = true;
     public bool PrintDepartmentSubtotals { get; set; }
     public int CopiesCount { get; set; } = 1;

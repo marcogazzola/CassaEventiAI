@@ -1,19 +1,18 @@
 using CassaEventiAI.Models;
 using System.Drawing.Printing;
 using System.Runtime.InteropServices;
-using System.Text;
 
 namespace CassaEventiAI.Services;
 
 public class PrintingService(ReceiptService receiptService)
 {
-    // ESC/POS commands
-    private static readonly byte[] EscInit = [0x1B, 0x40];        // ESC @    – inizializza
-    private static readonly byte[] EscCodePageCp1252 = [0x1B, 0x74, 0x10]; // ESC t 16 – WPC1252 (€ = 0x80)
-    private static readonly byte[] EscFontA = [0x1B, 0x4D, 0x00]; // ESC M 0  – Font A (12×24)
-    private static readonly byte[] EscFontB = [0x1B, 0x4D, 0x01]; // ESC M 1  – Font B (9×17, compresso)
-    private static readonly byte[] EscFontHeight2x = [0x1D, 0x21, 0x10]; // GS ! 16  – altezza ×2
-    private static readonly byte[] GsCut = [0x1D, 0x56, 0x41]; // GS V A   – taglio completo (POS-80)
+    // ESC/POS – solo taglio carta (il testo viene stampato via GDI)
+    private static readonly byte[] GsCut = [0x1D, 0x56, 0x30]; // GS V 0 – taglio completo (POS-80)
+
+    private const string ReceiptFontName  = "Lucida Console";
+    private const float ReceiptFontSize  = 11f;
+    private const float ReceiptTitleSize = 14f;
+    private const float ReceiptSmallSize = 8f;
 
     public List<string> GetInstalledPrinters()
         => PrinterSettings.InstalledPrinters.Cast<string>().OrderBy(x => x).ToList();
@@ -70,9 +69,7 @@ public class PrintingService(ReceiptService receiptService)
         if (!settings.IsValid)
             throw new InvalidOperationException($"Stampante non valida: {printerName}");
 
-        var encoding = Encoding.GetEncoding(1252);
-
-        // Split on the section-cut marker; each section gets its own GsCut
+        // Split on the section-cut marker; each section is printed via GDI + raw cut
         var sections = text.Split('\x1E', StringSplitOptions.RemoveEmptyEntries);
         foreach (var section in sections)
         {
@@ -80,19 +77,53 @@ public class PrintingService(ReceiptService receiptService)
             if (string.IsNullOrWhiteSpace(normalized))
                 continue;
 
-            var textBytes = encoding.GetBytes(
-                normalized.Replace("\r\n", "\n").Replace("\r", "\n").Replace("\n", "\r\n"));
-
-            var raw = new List<byte>();
-            raw.AddRange(EscInit);
-            raw.AddRange(EscCodePageCp1252);
-            raw.AddRange(EscFontB);
-            raw.AddRange(textBytes);
-            raw.AddRange([0x0A, 0x0A, 0x0A, 0x0A]); // avanzamento carta prima del taglio
-            raw.AddRange(GsCut);
-            raw.AddRange([0x0A, 0x0A, 0x0A, 0x0A]); // avanzamento carta prima del taglio
-            RawPrint(printerName, [.. raw]);
+            PrintGdi(normalized, printerName);
         }
+    }
+
+    private static void PrintGdi(string text, string printerName)
+    {
+        var lines = text.Replace("\r\n", "\n").Replace("\r", "\n").Split('\n');
+
+        using var baseFont  = new Font(ReceiptFontName, ReceiptFontSize,  FontStyle.Regular, GraphicsUnit.Point);
+        using var boldFont  = new Font(ReceiptFontName, ReceiptTitleSize, FontStyle.Bold,    GraphicsUnit.Point);
+        using var smallFont = new Font(ReceiptFontName, ReceiptSmallSize, FontStyle.Regular, GraphicsUnit.Point);
+
+        var doc = new PrintDocument();
+        doc.PrinterSettings.PrinterName = printerName;
+        doc.DefaultPageSettings.Margins = new Margins(0, 0, 0, 0);
+
+        int lineIndex = 0;
+        doc.PrintPage += (_, e) =>
+        {
+            float y = 0;
+            var g = e.Graphics!;
+            float lineHeight = baseFont.GetHeight(g);
+
+            while (lineIndex < lines.Length)
+            {
+                // Strip ESC/POS bold sequences; detect bold/small lines
+                var raw = lines[lineIndex];
+                var isSmall = raw.Contains('\x0E');
+                var clean = raw.Replace("\x0E", "").Replace("\x1B\x45\x01", "").Replace("\x1B\x45\x00", "");
+                var font = isSmall ? smallFont : raw.Contains("\x1B\x45\x01") ? boldFont : baseFont;
+
+                if (!string.IsNullOrEmpty(clean))
+                    g.DrawString(clean, font, Brushes.Black, 0f, y);
+
+                y += lineHeight;
+                lineIndex++;
+
+                if (lineIndex < lines.Length && y + lineHeight > e.PageBounds.Height)
+                {
+                    e.HasMorePages = true;
+                    return;
+                }
+            }
+            e.HasMorePages = false;
+        };
+
+        doc.Print();
     }
 
     private static void RawPrint(string printerName, byte[] data)

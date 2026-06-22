@@ -101,7 +101,7 @@ public partial class ReportViewModel : BaseViewModel
         {
             if (SelectedOrder == null || string.IsNullOrWhiteSpace(SelectedOrderPreview))
                 return;
-            _printing.PrintRawPreview(SelectedOrderPreview);
+            _printing.PrintRawPreview(SelectedOrderPreview.Replace("\n--- TAGLIO ---\n", "\x1E"));
             await Task.CompletedTask;
         }
         catch (Exception ex)

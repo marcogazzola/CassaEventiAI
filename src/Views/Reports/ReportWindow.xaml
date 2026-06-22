@@ -117,7 +117,7 @@
                             <TextBox Grid.Row="3" Text="{Binding SelectedOrderPreview}" IsReadOnly="True"
                                      FontFamily="Consolas" FontSize="12"
                                      TextWrapping="NoWrap" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto"/>
-                            <Button Grid.Row="4" Content="Stampa anteprima" Margin="0,8,0,0"
+                            <Button Grid.Row="4" Content="Ristampa scontrino" Margin="0,8,0,0"
                                     HorizontalAlignment="Right" Style="{StaticResource DeptTabButton}"
                                     Command="{Binding PrintSelectedPreviewCommand}"/>
                         </Grid>

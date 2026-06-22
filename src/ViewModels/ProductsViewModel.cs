@@ -20,7 +20,8 @@ public partial class ProductsViewModel(ProductService products) : BaseViewModel
     // Edit form
     [ObservableProperty] private string _editName = string.Empty;
     [ObservableProperty] private decimal _editPrice;
-    [ObservableProperty] private int _editDeptId;
+    [ObservableProperty] private Department? _editSelectedDept;
+    [ObservableProperty] private ObservableCollection<Department> _editDepartments = [];
     [ObservableProperty] private bool _editIsActive = true;
     [ObservableProperty] private bool _editTrackStock;
     [ObservableProperty] private int _editStockQty;
@@ -32,8 +33,9 @@ public partial class ProductsViewModel(ProductService products) : BaseViewModel
     public void Load()
     {
         var depts = products.GetDepartments(activeOnly: false).ToList();
-        depts.Insert(0, new Department { Id = 0, Name = "— Tutti i reparti —", Color = "#CCCCCC" });
-        Departments = new(depts);
+        EditDepartments = new(depts);
+        var filterDepts = depts.Prepend(new Department { Id = 0, Name = "— Tutti i reparti —", Color = "#CCCCCC" }).ToList();
+        Departments = new(filterDepts);
         AllProducts = new(products.GetProducts(activeOnly: false));
         ApplyFilter();
     }
@@ -52,18 +54,17 @@ public partial class ProductsViewModel(ProductService products) : BaseViewModel
 
     [RelayCommand] private void New()
     {
-        var defaultDepartment = Departments.FirstOrDefault();
         Selected = null; EditName = ""; EditPrice = 0; EditIsActive = true;
-        EditDeptId = defaultDepartment?.Id ?? 0; EditTrackStock = false;
+        EditSelectedDept = EditDepartments.FirstOrDefault(); EditTrackStock = false;
         EditStockQty = 0; EditSortOrder = AllProducts.Count; IsNew = true; IsEditing = true;
     }
 
     [RelayCommand] private void Edit(Product p)
     {
         Selected = p; EditName = p.Name; EditPrice = p.Price;
-        EditDeptId = p.DepartmentId; EditIsActive = p.IsActive;
-        EditTrackStock = p.TrackStock; EditStockQty = p.StockQty;
-        EditSortOrder = p.SortOrder; IsNew = false; IsEditing = true;
+        EditSelectedDept = EditDepartments.FirstOrDefault(d => d.Id == p.DepartmentId);
+        EditIsActive = p.IsActive; EditTrackStock = p.TrackStock;
+        EditStockQty = p.StockQty; EditSortOrder = p.SortOrder; IsNew = false; IsEditing = true;
     }
 
     [RelayCommand] private void Cancel() { IsEditing = false; }
@@ -72,10 +73,10 @@ public partial class ProductsViewModel(ProductService products) : BaseViewModel
     {
         if (string.IsNullOrWhiteSpace(EditName)) { StatusMessage = "Nome obbligatorio."; return; }
         if (EditPrice < 0) { StatusMessage = "Prezzo non valido."; return; }
-        if (EditDeptId == 0) { StatusMessage = "Seleziona un reparto."; return; }
+        if (EditSelectedDept == null) { StatusMessage = "Seleziona un reparto."; return; }
         var p = IsNew ? new Product() : (Selected ?? new Product());
         p.Name = EditName.Trim(); p.Price = EditPrice;
-        p.DepartmentId = EditDeptId; p.IsActive = EditIsActive;
+        p.DepartmentId = EditSelectedDept.Id; p.IsActive = EditIsActive;
         p.TrackStock = EditTrackStock; p.StockQty = EditStockQty; p.SortOrder = EditSortOrder;
         products.SaveProduct(p);
         Load(); IsEditing = false; StatusMessage = $"Articolo '{p.Name}' salvato.";
