@@ -175,7 +175,7 @@ public partial class FrontOfficeViewModel : BaseViewModel
     {
         if (CartItems.Count == 0) { ShowError("Il carrello è vuoto."); return; }
         if (SelectedPaymentMethod == null) { ShowError("Seleziona un metodo di pagamento."); return; }
-        if (SelectedPaymentMethod.RequiresCashInput && CashGiven < Total)
+        if (SelectedPaymentMethod.RequiresCashInput && CashGiven > 0 && CashGiven < Total)
         {
             ShowError($"Importo contanti insufficiente (mancano € {Total - CashGiven:F2}).");
             return;

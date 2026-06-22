@@ -500,8 +500,13 @@
         <!-- Status bar -->
         <Border Grid.Row="2" Background="{StaticResource BgPrimaryBrush}"
                 BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,0.5,0,0">
-            <TextBlock Text="{Binding StatusMessage}" VerticalAlignment="Center"
-                       Margin="14,0" FontSize="12" Foreground="{StaticResource TextSecondaryBrush}"/>
+            <Grid Margin="14,0">
+                <TextBlock Text="{Binding StatusMessage}" VerticalAlignment="Center"
+                           FontSize="12" Foreground="{StaticResource TextSecondaryBrush}"/>
+                <TextBlock Text="MarcoGazzola.com © 2026"
+                           HorizontalAlignment="Center" VerticalAlignment="Center"
+                           FontSize="10" Foreground="{StaticResource TextMutedBrush}"/>
+            </Grid>
         </Border>
     </Grid>
 </Window>

@@ -4,7 +4,12 @@
         Title="Cassa Eventi AI" Height="620" Width="540"
         WindowStartupLocation="CenterScreen" ResizeMode="NoResize"
         Icon="/Resources/cassa.ico">
-    <ScrollViewer VerticalScrollBarVisibility="Auto">
+    <Grid>
+    <Grid.RowDefinitions>
+        <RowDefinition Height="*"/>
+        <RowDefinition Height="Auto"/>
+    </Grid.RowDefinitions>
+    <ScrollViewer Grid.Row="0" VerticalScrollBarVisibility="Auto">
       <Grid Margin="36">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
@@ -124,4 +129,8 @@
         </Border>
       </Grid>
     </ScrollViewer>
+    <TextBlock Grid.Row="1" Text="MarcoGazzola.com © 2026"
+               HorizontalAlignment="Center" Margin="0,6,0,10"
+               FontSize="10" Foreground="{StaticResource TextMutedBrush}"/>
+    </Grid>
 </Window>

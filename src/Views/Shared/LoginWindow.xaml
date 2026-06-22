@@ -10,6 +10,10 @@
         <conv:InverseBoolToVisibilityConverter x:Key="InvBoolToVis"/>
         <conv:NullToCollapsedConverter x:Key="NullToCollapsed"/>
     </Window.Resources>
+    <Grid>
+    <TextBlock Text="MarcoGazzola.com © 2026"
+               HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="0,0,0,10"
+               FontSize="10" Foreground="{StaticResource TextMutedBrush}"/>
     <Grid VerticalAlignment="Center" Margin="36">
 
         <!-- Normal login -->
@@ -77,5 +81,6 @@
             </StackPanel>
         </Border>
 
+    </Grid>
     </Grid>
 </Window>

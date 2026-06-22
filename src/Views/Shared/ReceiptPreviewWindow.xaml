@@ -7,6 +7,7 @@
         <Grid.RowDefinitions>
             <RowDefinition Height="*"/>
             <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
         <TextBox x:Name="PreviewText"
                  Grid.Row="0"
@@ -20,5 +21,8 @@
                 Margin="0,10,0,0"
                 HorizontalAlignment="Right"
                 Click="Close_Click"/>
+        <TextBlock Grid.Row="2" Text="MarcoGazzola.com © 2026"
+                   HorizontalAlignment="Center" Margin="0,4,0,0"
+                   FontSize="10" Foreground="{StaticResource TextMutedBrush}"/>
     </Grid>
 </Window>
