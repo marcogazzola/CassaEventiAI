@@ -22,6 +22,8 @@
             <conv:EqualityMultiConverter x:Key="Equality"/>
             <conv:BoolToVoidLabelConverter x:Key="BoolToVoidLabel"/>
             <conv:BoolToVoidStyleConverter x:Key="BoolToVoidStyle"/>
+            <conv:DecimalInputConverter x:Key="DecimalInput"/>
+            <conv:PositiveEuroConverter x:Key="PositiveEuro"/>
 
             <Style TargetType="ComboBox" BasedOn="{StaticResource {x:Type ComboBox}}">
                 <Setter Property="VerticalContentAlignment" Value="Center"/>

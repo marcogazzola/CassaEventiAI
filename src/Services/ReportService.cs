@@ -11,6 +11,7 @@ public record DailyCashReport(
     int IssuedReceipts,
     int VoidedReceipts,
     decimal TotalSold,
+    decimal TotalDiscounts,
     List<DailyProductSalesRow> Products);
 
 public class ReportService(EventService eventService)
@@ -26,13 +27,15 @@ public class ReportService(EventService eventService)
 
         var activeSales = sales.Where(s => !s.IsVoided).ToList();
         var products = activeSales
-            .SelectMany(s => s.Items)
-            .GroupBy(i => i.ProductName)
-            .OrderBy(g => g.Key)
+            .SelectMany(s => s.Items.Select(i => new { s.CreatedAt, Item = i }))
+            .GroupBy(x => new { x.CreatedAt.Date, x.Item.ProductName, x.Item.UnitPrice })
+            .OrderBy(g => g.Key.Date).ThenBy(g => g.Key.ProductName)
             .Select(g => new DailyProductSalesRow(
-                g.Key,
-                g.Sum(x => x.Quantity),
-                g.Sum(x => x.LineTotal)))
+                g.Key.Date,
+                g.Key.ProductName,
+                g.Key.UnitPrice,
+                g.Sum(x => x.Item.Quantity),
+                g.Sum(x => x.Item.LineTotal)))
             .ToList();
 
         return new DailyCashReport(
@@ -41,6 +44,7 @@ public class ReportService(EventService eventService)
             sales.Count,
             sales.Count(s => s.IsVoided),
             activeSales.Sum(s => s.Total),
+            activeSales.Sum(s => s.Subtotal - s.Total),
             products);
     }
 
@@ -55,7 +59,8 @@ public class ReportService(EventService eventService)
                 s.OperatorName,
                 s.PaymentMethodLabel,
                 s.Total,
-                s.IsVoided))
+                s.IsVoided,
+                s.Subtotal - s.Total))
             .ToListAsync()
             .ContinueWith(t => t.Result.OrderByDescending(o => o.SaleId).ToList());
     }
@@ -74,19 +79,27 @@ public class ReportService(EventService eventService)
         ws.Cell(4, 1).Value = "Totale venduto";
         ws.Cell(4, 2).Value = report.TotalSold;
         ws.Cell(4, 2).Style.NumberFormat.Format = "€ #,##0.00";
+        ws.Cell(5, 1).Value = "Sconti applicati";
+        ws.Cell(5, 2).Value = report.TotalDiscounts;
+        ws.Cell(5, 2).Style.NumberFormat.Format = "€ #,##0.00";
 
-        ws.Cell(6, 1).Value = "Prodotto";
-        ws.Cell(6, 2).Value = "Quantità";
-        ws.Cell(6, 3).Value = "Importo totale";
-        ws.Range(6, 1, 6, 3).Style.Font.Bold = true;
+        ws.Cell(7, 1).Value = "Giorno";
+        ws.Cell(7, 2).Value = "Prodotto";
+        ws.Cell(7, 3).Value = "Prezzo";
+        ws.Cell(7, 4).Value = "Quantità";
+        ws.Cell(7, 5).Value = "Importo totale";
+        ws.Range(7, 1, 7, 5).Style.Font.Bold = true;
 
-        var row = 7;
+        var row = 8;
         foreach (var product in report.Products)
         {
-            ws.Cell(row, 1).Value = product.ProductName;
-            ws.Cell(row, 2).Value = product.Quantity;
-            ws.Cell(row, 3).Value = product.TotalAmount;
+            ws.Cell(row, 1).Value = product.Date.ToString("dd/MM/yyyy");
+            ws.Cell(row, 2).Value = product.ProductName;
+            ws.Cell(row, 3).Value = product.UnitPrice;
             ws.Cell(row, 3).Style.NumberFormat.Format = "€ #,##0.00";
+            ws.Cell(row, 4).Value = product.Quantity;
+            ws.Cell(row, 5).Value = product.TotalAmount;
+            ws.Cell(row, 5).Style.NumberFormat.Format = "€ #,##0.00";
             row++;
         }
 

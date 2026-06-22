@@ -39,7 +39,7 @@ public class AuthService(ConfigService config)
             PasswordHash = BCrypt.Net.BCrypt.HashPassword(password),
             Role = "admin",
             IsActive = true,
-            MustChangePassword = true
+            MustChangePassword = false
         };
         var list = config.LoadOperators();
         list.Add(op);

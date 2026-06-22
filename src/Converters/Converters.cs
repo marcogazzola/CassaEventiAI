@@ -153,3 +153,24 @@ public class BoolToVoidStyleConverter : IValueConverter
     public object ConvertBack(object v, Type t, object p, CultureInfo c)
         => throw new NotImplementedException();
 }
+
+public class DecimalInputConverter : IValueConverter
+{
+    public object Convert(object v, Type t, object p, CultureInfo c)
+        => v is IFormattable f ? f.ToString(null, CultureInfo.InvariantCulture) : "0";
+    public object ConvertBack(object v, Type t, object p, CultureInfo c)
+    {
+        var s = v?.ToString()?.Trim().Replace(',', '.') ?? "";
+        if (t == typeof(int))
+            return int.TryParse(s, out var i) ? i : 0;
+        return decimal.TryParse(s, NumberStyles.Number, CultureInfo.InvariantCulture, out var r) ? r : 0m;
+    }
+}
+
+public class PositiveEuroConverter : IValueConverter
+{
+    public object Convert(object v, Type t, object p, CultureInfo c)
+        => v is decimal d && d > 0 ? $"€ {d:F2}" : string.Empty;
+    public object ConvertBack(object v, Type t, object p, CultureInfo c)
+        => throw new NotImplementedException();
+}

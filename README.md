@@ -73,6 +73,7 @@ CassaEventiAI/
     │   └── Shared/
     │       ├── StartupWindow.xaml
     │       ├── LoginWindow.xaml
+    │       ├── OrderSummaryWindow.xaml
     │       └── ReceiptPreviewWindow.xaml
     ├── Converters/Converters.cs
     └── Resources/Themes/LightTheme.xaml
@@ -87,70 +88,80 @@ CassaEventiAI/
 - Carrello con aumento/riduzione quantità.
 - Vincolo stock: se abilitato non è possibile vendere oltre disponibilità.
 - Decremento stock in vendita e ripristino stock su storno.
-- Sconto percentuale con range `0..100`.
-- Metodi di pagamento multipli (layout 3 per riga).
+- Sconto percentuale con range `0..100`; se attivo mostra importo sconto sopra al totale.
+- Metodi di pagamento multipli (layout 3 per riga), posizionati sotto al totale.
 - Calcolo resto automatico per pagamenti cash.
-- Anteprima scontrino coerente con stampa.
+- Popup riepilogo ordine dopo il checkout (se `ShowOrderSummary=true`): articoli, totale, pagamento con pulsanti Ristampa e Chiudi.
+- Anteprima scontrino accessibile tramite pulsante 🔍 nel footer (sempre visibile).
 - Ristampa ultimo scontrino.
 - Storno con ricerca scontrini emessi e riattivazione scontrini stornati.
 - Header con nome utente connesso e orologio live.
-- Footer con metriche sessione e toolbar operativa.
+- Footer metriche sessione (scontrini, totale incassato, ultimo ordine) + toolbar operativa.
+- Pulsante Settings visibile solo agli admin.
 
 ### BackOffice (Settings)
 
-- Gestione reparti:
-  - attivazione/disattivazione
-  - ordine visualizzazione
-  - flag `PrintSeparateReceipt`
-  - colore reparto (gli articoli ereditano il colore del reparto)
-- Gestione articoli:
-  - prezzo
-  - reparto
-  - stato attivo
-  - stock (`TrackStock`, `StockQty`)
-- Gestione operatori:
-  - username/display name
-  - ruolo (`admin` / `cashier`)
-  - stato attivo
-- Gestione metodi di pagamento.
-- Configurazione scontrino (header/footer e opzioni stampa).
-- Selezione stampante Windows installata (nessuna porta seriale).
-- Tema scuro rimosso: tema unico chiaro.
+Tab **Reparti**:
+- Attivazione/disattivazione, ordine, colore reparto.
+- Nome reparto: max 15 caratteri.
+
+Tab **Articoli**:
+- Prezzo, reparto, stato attivo, stock (`TrackStock`, `StockQty`).
+- Nome articolo: max 18 caratteri.
+
+Tab **Pagamenti**: gestione metodi di pagamento.
+
+Tab **Configurazione**:
+- `ShowOrderSummary`: mostra popup riepilogo dopo checkout.
+- `ShowTotalInFooter`: mostra totale incassato nel footer per i cashier.
+- `KioskMode`: modalità schermo intero.
+
+Tab **Stampa**:
+- Selezione stampante Windows installata.
+- `PrinterEnabled`: abilita/disabilita stampa.
+- `PrintFiscalReceipt`: inibisce la stampa dello scontrino fiscale.
+- `PrintOperator`: mostra/nasconde nome operatore sullo scontrino.
+- Header/footer scontrino, extra footer legale (testo piccolo, solo primo scontrino).
+- `ExtraFooterEnabled` / `ExtraFooterOnlyFirst`.
+- `PrintPrices`, `PrintDepartmentSubtotals`.
+
+Tab **Operatori**: username, display name, ruolo (`admin`/`cashier`), stato attivo.
+
+Tab **Evento/Backup**: gestione evento attivo, backup manuale/automatico.
 
 ### Reportistica (finestra dedicata)
 
 - Selezione periodo `Da` / `A`.
-- Tab **Incasso alla data/periodo**:
-  - numero scontrini emessi
-  - numero scontrini annullati
-  - elenco prodotti con quantità e importo totale
-  - totale venduto
-- Tab **Ordini emessi alla data/periodo**:
-  - elenco ordini con dettaglio ordine selezionato
-  - anteprima scontrino dell’ordine
+- Tab **Venduto**:
+  - scontrini emessi, scontrini annullati, totale venduto, totale sconti applicati
+  - griglia raggruppata per data + prodotto + prezzo (colonne: Giorno, Prodotto, Prezzo, Quantità, Importo totale)
+- Tab **Ordini emessi**:
+  - elenco ordini con colonna Sconto (vuota se nessuno sconto applicato)
+  - dettaglio ordine selezionato con anteprima scontrino
   - layout colonne 60% elenco / 40% dettaglio
-- Export Excel con periodo selezionato.
+- Export Excel: include riga "Sconti applicati" nel riepilogo e stessa struttura colonne della griglia.
 
 ## Stampa scontrini (tecnica + formato)
 
 - Stampa e anteprima generate dalla stessa pipeline (`ReceiptService` + `PrintingService`).
-- Scontrino testuale unico con separazione sezioni tramite carattere di taglio carta.
-- Sezione fiscale con:
+- Scontrino testuale con separazione sezioni tramite carattere `\x1E` (taglio carta GDI).
+- Sezione fiscale (inibibile con `PrintFiscalReceipt=false`):
   - intestazione da configurazione
-  - numero ordine, operatore, data/ora
+  - numero ordine, operatore (opzionale), data/ora
   - righe prodotto con quantità/prezzo/totale
-  - sconto
+  - sconto percentuale e importo
   - totale, pagato e resto (per cash)
-  - piè di pagina da configurazione
-- Sezioni reparto (ritiro) create solo per reparti con `PrintSeparateReceipt=true`.
+  - piè di pagina + extra footer legale in font piccolo
+- Sezioni reparto (ritiro): create solo per reparti con `PrintSeparateReceipt=true`.
 - Quantità senza decimali, importi con `€`.
+- Font: Lucida Console — 11pt base, 14pt bold (intestazioni reparto), 8pt small (extra footer).
 
 ## Ruoli, autorizzazioni e visibilità
 
 | Funzionalità | Admin | Cashier |
 |---|---:|---:|
-| Accesso Settings/BackOffice | Sì | No |
-| Accesso Reportistica | Sì | No |
+| Accesso Settings/BackOffice | Sì | No (pulsante nascosto) |
+| Accesso Reportistica | Sì | No (pulsante nascosto) |
 | Totali footer | Sempre visibili | Visibili solo se `ShowTotalInFooter=true` |
 | Operazioni cassa (vendita/stampa/storno) | Sì | Sì |
 
@@ -211,13 +222,12 @@ Tabelle principali:
 | CommunityToolkit.Mvvm | 8.4.2 |
 | Microsoft.Extensions.DependencyInjection | 10.0.9 |
 | Microsoft.Extensions.Logging | 10.0.9 |
-| ClosedXML | 0.104.2 |
+| ClosedXML | 0.105.0 |
 | BCrypt.Net-Next | 4.2.1 |
 | CsvHelper | 33.1.0 |
-| SixLabors.ImageSharp | 3.1.12 |
-| ESCPOS_NET | 3.0.0 |
 
 ## Note operative
 
 - Se `CassaEventiAI.exe` è aperto, la build può fallire per file lock: chiudere il processo prima di compilare.
 - Le funzionalità di reportistica e settings sono intenzionalmente riservate agli admin.
+

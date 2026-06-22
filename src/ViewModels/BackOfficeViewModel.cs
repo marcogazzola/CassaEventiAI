@@ -90,6 +90,7 @@ public partial class BackOfficeViewModel : BaseViewModel
     [ObservableProperty] private string _selectedPrinter = string.Empty;
     [ObservableProperty] private ObservableCollection<string> _availablePrinters = [];
     [ObservableProperty] private bool _showTotalInFooter;
+    [ObservableProperty] private bool _showOrderSummary = true;
     [ObservableProperty] private bool _kioskMode;
     [ObservableProperty] private bool _autoBackupEnabled;
     [ObservableProperty] private int _autoBackupIntervalMinutes = 30;
@@ -103,7 +104,7 @@ public partial class BackOfficeViewModel : BaseViewModel
             SelectedPrinter = AvailablePrinters.FirstOrDefault() ?? string.Empty;
         else
             SelectedPrinter = AvailablePrinters.Contains(s.PrinterName) ? s.PrinterName : AvailablePrinters.FirstOrDefault() ?? string.Empty;
-        ShowTotalInFooter = s.ShowTotalInFooter; KioskMode = s.KioskMode;
+        ShowTotalInFooter = s.ShowTotalInFooter; ShowOrderSummary = s.ShowOrderSummary; KioskMode = s.KioskMode;
         AutoBackupEnabled = s.AutoBackupEnabled;
         AutoBackupIntervalMinutes = s.AutoBackupIntervalMinutes;
     }
@@ -113,9 +114,10 @@ public partial class BackOfficeViewModel : BaseViewModel
     {
         var s = App.CurrentSettings;
         s.PrinterEnabled = PrinterEnabled; s.PrinterName = SelectedPrinter;
-        s.ShowTotalInFooter = ShowTotalInFooter; s.KioskMode = KioskMode;
+        s.ShowTotalInFooter = ShowTotalInFooter; s.ShowOrderSummary = ShowOrderSummary; s.KioskMode = KioskMode;
         s.AutoBackupEnabled = AutoBackupEnabled; s.AutoBackupIntervalMinutes = AutoBackupIntervalMinutes;
         _config.SaveAppSettings(s);
+        _backup.Restart();
         StatusMessage = "Impostazioni salvate.";
     }
 
@@ -146,6 +148,7 @@ public partial class BackOfficeViewModel : BaseViewModel
     [ObservableProperty] private bool _extraFooterEnabled;
     [ObservableProperty] private bool _extraFooterOnlyFirst = true;
     [ObservableProperty] private bool _printOperator = true;
+    [ObservableProperty] private bool _printFiscalReceipt = true;
     [ObservableProperty] private bool _printPrices = true;
     [ObservableProperty] private bool _printDeptSubtotals;
 
@@ -156,6 +159,7 @@ public partial class BackOfficeViewModel : BaseViewModel
         ExtraFooterText = c.ExtraFooterText;
         ExtraFooterEnabled = c.ExtraFooterEnabled;
         ExtraFooterOnlyFirst = c.ExtraFooterOnlyFirst;
+        PrintFiscalReceipt = c.PrintFiscalReceipt;
         PrintOperator = c.PrintOperator;
         PrintPrices = c.PrintPrices; PrintDeptSubtotals = c.PrintDepartmentSubtotals;
     }
@@ -170,6 +174,7 @@ public partial class BackOfficeViewModel : BaseViewModel
             ExtraFooterText = ExtraFooterText,
             ExtraFooterEnabled = ExtraFooterEnabled,
             ExtraFooterOnlyFirst = ExtraFooterOnlyFirst,
+            PrintFiscalReceipt = PrintFiscalReceipt,
             PrintOperator = PrintOperator,
             PrintPrices = PrintPrices,
             PrintDepartmentSubtotals = PrintDeptSubtotals

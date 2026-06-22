@@ -19,6 +19,8 @@ public partial class FrontOfficeViewModel : BaseViewModel
     private readonly DispatcherTimer _clockTimer;
     private int? _currentShiftId;
     public event Action? ShiftClosed;
+    public event Action<Sale, List<Department>>? SaleCompleted;
+    public event Action<string>? PreviewRequested;
 
     public FrontOfficeViewModel(
         SaleService sales, ProductService products,
@@ -54,6 +56,8 @@ public partial class FrontOfficeViewModel : BaseViewModel
     [ObservableProperty] private ObservableCollection<PaymentMethod> _paymentMethods = [];
     [ObservableProperty] private PaymentMethod? _selectedPaymentMethod;
     [ObservableProperty] private bool _showCashInput;
+    [ObservableProperty] private decimal _discountAmount;
+    [ObservableProperty] private bool _isDiscountActive;
     [ObservableProperty] private int _salesCount;
     [ObservableProperty] private decimal _totalIncassato;
     [ObservableProperty] private decimal _lastOrderAmount;
@@ -192,13 +196,17 @@ public partial class FrontOfficeViewModel : BaseViewModel
             if (!result.Success) { ShowError(result.Error ?? "Errore durante la vendita."); return; }
 
             var sale = await _sales.GetSaleByIdAsync(result.SaleId);
+            var depts = Departments.ToList();
             if (sale != null)
-                _printing.PrintSale(sale, null, Departments.ToList());
+                _printing.PrintSale(sale, null, depts);
 
             ClearCart();
             ReloadProducts();
             await RefreshStatsAsync();
             StatusMessage = $"Scontrino #{result.SaleId} emesso.";
+
+            if (App.CurrentSettings.ShowOrderSummary && sale != null)
+                SaleCompleted?.Invoke(sale, depts);
         }
         finally { IsBusy = false; }
     }
@@ -249,10 +257,7 @@ public partial class FrontOfficeViewModel : BaseViewModel
         };
 
         var preview = _printing.BuildSalePreview(previewSale, null, Departments.ToList());
-        var win = new ReceiptPreviewWindow(preview, "Anteprima scontrino");
-        if (System.Windows.Application.Current.MainWindow != null)
-            win.Owner = System.Windows.Application.Current.MainWindow;
-        win.ShowDialog();
+        PreviewRequested?.Invoke(preview);
     }
 
     [RelayCommand]
@@ -344,6 +349,8 @@ public partial class FrontOfficeViewModel : BaseViewModel
     {
         CartQuantityCount = CartItems.Sum(i => i.Quantity);
         Subtotal = CartItems.Sum(i => i.LineTotal);
+        DiscountAmount = Math.Round(Subtotal * DiscountPct / 100m, 2);
+        IsDiscountActive = DiscountPct > 0;
         Total = Math.Round(Subtotal * (1 - DiscountPct / 100m), 2);
         if (SelectedPaymentMethod?.RequiresCashInput == true)
             Change = Math.Max(0, CashGiven - Total);

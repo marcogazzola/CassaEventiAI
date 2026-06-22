@@ -72,6 +72,14 @@ public class BackupService(ConfigService config) : IDisposable
         File.Copy(settings.ActiveDbPath, Path.Combine(dest, fileName), overwrite: true);
     }
 
+    public void Restart()
+    {
+        _timer?.Stop();
+        _timer?.Dispose();
+        _timer = null;
+        Start();
+    }
+
     public void Stop() => _timer?.Stop();
 
     public void Dispose()

@@ -29,63 +29,58 @@ public class ReceiptService(ConfigService config)
         // SEZIONE 1: SCONTRINO FISCALE
         // ═════════════════════════════════════════════════════════════
 
-        if (!string.IsNullOrWhiteSpace(cfg.HeaderText))
-            lines.AddRange(WrapAndCenter(cfg.HeaderText, ReceiptLineWidth));
-
-        lines.Add(string.Empty);
-        lines.Add(CenterText($"Scontrino #{sale.Id:D4}"));
-        if (cfg.PrintOperator)
-            lines.Add($"Operatore: {sale.OperatorName}");
-        lines.AddRange(WrapAndCenter($"{sale.CreatedAt:dd/MM/yy HH:mm}", ReceiptLineWidth));
-        lines.Add(string.Empty);
-
-        if (cfg.PrintPrices)
-            lines.Add($"{"#",-2} {"Articolo",-18} {"Tot",(AmountWidth)}");
-        lines.Add(string.Empty);
-
-        var items = filterDepts != null
-            ? sale.Items.Where(i => filterDepts.Any(d => d.Id == i.DepartmentId))
-            : sale.Items;
-
-        foreach (var item in items)
+        if (cfg.PrintFiscalReceipt)
         {
-            var name = item.ProductName.Length > 18 ? item.ProductName[..18] : item.ProductName;
-            var line = cfg.PrintPrices
-                ? $"{ReceiptDetaiRow}{item.Quantity,2} {name,-18} {item.LineTotal,(AmountWidth):F2}"
-                : $"{ReceiptDetaiRow}{item.Quantity} {name}";
-            lines.Add(line);
-        }
+            if (!string.IsNullOrWhiteSpace(cfg.HeaderText))
+                lines.AddRange(WrapAndCenter(cfg.HeaderText, ReceiptLineWidth));
 
-        lines.Add(string.Empty);
-        if (cfg.PrintPrices)
-        {
-            if (sale.DiscountPct > 0)
-                lines.Add(FormatAmountLine($"Sconto {sale.DiscountPct:F0}%", -sale.Subtotal * sale.DiscountPct / 100));
-
-            lines.Add(new string('-', ReceiptLineWidth));
-            lines.Add(FormatAmountLine("TOTALE", sale.Total));
-
-            // if (sale.PaymentMethodKey == "cash")
-            // {
-            //     lines.Add(FormatAmountLine("Pagato", sale.CashGiven));
-            //     lines.Add(FormatAmountLine("Resto", sale.Change));
-            // }
-        }
-
-        lines.Add(string.Empty);
-        lines.Add(string.Empty);
-        if (!string.IsNullOrWhiteSpace(cfg.FooterText))
-            lines.AddRange(WrapAndCenter(cfg.FooterText, ReceiptLineWidth));
-
-        if (cfg.ExtraFooterEnabled && !string.IsNullOrWhiteSpace(cfg.ExtraFooterText))
-        {
             lines.Add(string.Empty);
-            lines.AddRange(WrapAndCenter(cfg.ExtraFooterText, ReceiptSmallLineWidth).Select(l => SmallOn + l));
-        }
+            lines.Add(CenterText($"Scontrino #{sale.Id:D4}"));
+            if (cfg.PrintOperator)
+                lines.Add($"Operatore: {sale.OperatorName}");
+            lines.AddRange(WrapAndCenter($"{sale.CreatedAt:dd/MM/yy HH:mm}", ReceiptLineWidth));
+            lines.Add(string.Empty);
 
-        // lines.Add(string.Empty);
-        // lines.Add(string.Empty);
-        lines.Add(CutMark);
+            if (cfg.PrintPrices)
+                lines.Add($"{"#",-2} {"Articolo",-18} {"Tot",AmountWidth}");
+            lines.Add(string.Empty);
+
+            var items = filterDepts != null
+                ? sale.Items.Where(i => filterDepts.Any(d => d.Id == i.DepartmentId))
+                : sale.Items;
+
+            foreach (var item in items)
+            {
+                var name = item.ProductName.Length > 18 ? item.ProductName[..18] : item.ProductName;
+                var line = cfg.PrintPrices
+                    ? $"{ReceiptDetaiRow}{item.Quantity,2} {name,-18} {item.LineTotal,AmountWidth:F2}"
+                    : $"{ReceiptDetaiRow}{item.Quantity} {name}";
+                lines.Add(line);
+            }
+
+            lines.Add(string.Empty);
+            if (cfg.PrintPrices)
+            {
+                if (sale.DiscountPct > 0)
+                    lines.Add(FormatAmountLine($"Sconto {sale.DiscountPct:F0}%", -sale.Subtotal * sale.DiscountPct / 100));
+
+                lines.Add(new string('-', ReceiptLineWidth));
+                lines.Add(FormatAmountLine("TOTALE", sale.Total));
+            }
+
+            lines.Add(string.Empty);
+            lines.Add(string.Empty);
+            if (!string.IsNullOrWhiteSpace(cfg.FooterText))
+                lines.AddRange(WrapAndCenter(cfg.FooterText, ReceiptLineWidth));
+
+            if (cfg.ExtraFooterEnabled && !string.IsNullOrWhiteSpace(cfg.ExtraFooterText))
+            {
+                lines.Add(string.Empty);
+                lines.AddRange(WrapAndCenter(cfg.ExtraFooterText, ReceiptSmallLineWidth).Select(l => SmallOn + l));
+            }
+
+            lines.Add(CutMark);
+        }
 
         // ═════════════════════════════════════════════════════════════
         // SEZIONI 2+: SCONTRINI PER REPARTO (solo se abilitato)

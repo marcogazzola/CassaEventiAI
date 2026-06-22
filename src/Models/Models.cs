@@ -118,6 +118,7 @@ public class ReceiptConfig
     public string ExtraFooterText { get; set; } = "Erogazione a sostegno delle attività istituzionali Raccolta fondi occasionale ex. art. 7 D.Lgs. 117/2017";
     public bool ExtraFooterEnabled { get; set; } = true;
     public bool ExtraFooterOnlyFirst { get; set; } = true;
+    public bool PrintFiscalReceipt { get; set; } = true;
     public bool PrintOperator { get; set; } = true;
     public bool PrintPrices { get; set; } = true;
     public bool PrintDepartmentSubtotals { get; set; }
@@ -131,6 +132,7 @@ public class AppSettings
     public string PrinterName { get; set; } = string.Empty;
     public bool PrinterEnabled { get; set; } = true;
     public bool ShowTotalInFooter { get; set; } = true;
+    public bool ShowOrderSummary { get; set; } = true;
     public bool KioskMode { get; set; }
     public bool AutoBackupEnabled { get; set; } = true;
     public int AutoBackupIntervalMinutes { get; set; } = 30;
@@ -182,6 +184,6 @@ public class ProductGroup
 
 public record SaleLookupRow(int SaleId, DateTime CreatedAt, string OperatorName, decimal Total, bool IsVoided = false);
 
-public record DailyProductSalesRow(string ProductName, int Quantity, decimal TotalAmount);
+public record DailyProductSalesRow(DateTime Date, string ProductName, decimal UnitPrice, int Quantity, decimal TotalAmount);
 
-public record DailyOrderRow(int SaleId, DateTime CreatedAt, string OperatorName, string PaymentMethod, decimal Total, bool IsVoided);
+public record DailyOrderRow(int SaleId, DateTime CreatedAt, string OperatorName, string PaymentMethod, decimal Total, bool IsVoided, decimal DiscountAmount);

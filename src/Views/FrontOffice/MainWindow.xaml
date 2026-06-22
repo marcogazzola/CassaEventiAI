@@ -185,8 +185,32 @@
                                          BorderThickness="0"
                                          PreviewTextInput="NumericTextBox_PreviewTextInput"
                                          DataObject.Pasting="NumericTextBox_Pasting"
-                                         Text="{Binding DiscountPct, UpdateSourceTrigger=PropertyChanged}"/>
+                                         Text="{Binding DiscountPct, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource DecimalInput}}"/>
                                 </Border>
+                            </Grid>
+                        </Border>
+
+                        <Border Background="{StaticResource BgSecondaryBrush}" CornerRadius="8"
+                                Padding="12,8" Margin="0,0,0,6"
+                                Visibility="{Binding IsDiscountActive, Converter={StaticResource BoolToVis}}">
+                            <Grid>
+                                <TextBlock Text="{Binding DiscountPct, StringFormat='Sconto {0:F0}%'}"
+                                           FontSize="12" Foreground="{StaticResource TextSecondaryBrush}"
+                                           VerticalAlignment="Center"/>
+                                <TextBlock Text="{Binding DiscountAmount, StringFormat='-€ {0:F2}'}"
+                                           FontSize="13" FontWeight="SemiBold" HorizontalAlignment="Right"
+                                           Foreground="{StaticResource AccentAmberBrush}" VerticalAlignment="Center"/>
+                            </Grid>
+                        </Border>
+
+                        <Border Background="{StaticResource AccentBlueBgBrush}" CornerRadius="8"
+                                Padding="12,9" Margin="0,0,0,8">
+                            <Grid>
+                                <TextBlock Text="Totale" FontSize="13" FontWeight="SemiBold"
+                                           Foreground="{StaticResource AccentBlueBrush}" VerticalAlignment="Center"/>
+                                <TextBlock Text="{Binding Total, Converter={StaticResource Euro}}"
+                                           FontSize="24" FontWeight="Bold"
+                                           Foreground="{StaticResource AccentBlueBrush}" HorizontalAlignment="Right"/>
                             </Grid>
                         </Border>
 
@@ -227,16 +251,6 @@
                                 </ItemsControl.ItemTemplate>
                             </ItemsControl>
                         </Border>
-                        <Border Background="{StaticResource AccentBlueBgBrush}" CornerRadius="8"
-                                Padding="12,9" Margin="0,0,0,8">
-                            <Grid>
-                                <TextBlock Text="Totale" FontSize="13" FontWeight="SemiBold"
-                                           Foreground="{StaticResource AccentBlueBrush}" VerticalAlignment="Center"/>
-                                <TextBlock Text="{Binding Total, Converter={StaticResource Euro}}"
-                                           FontSize="24" FontWeight="Bold"
-                                           Foreground="{StaticResource AccentBlueBrush}" HorizontalAlignment="Right"/>
-                            </Grid>
-                        </Border>
 
                         <Border Background="{StaticResource BgSecondaryBrush}" CornerRadius="8"
                                 Padding="10,8" Margin="0,0,0,8"
@@ -264,8 +278,6 @@
                             </StackPanel>
                         </Border>
 
-                        <Button Content="Anteprima scontrino" Style="{StaticResource DeptTabButton}" Height="38" Margin="0,0,0,8"
-                                Command="{Binding PreviewCurrentReceiptCommand}"/>
                         <Button Content="✓ Incassa e stampa"
                                 Style="{StaticResource SuccessButton}" Height="46" FontSize="15"
                                 Command="{Binding CheckoutCommand}"/>
@@ -286,9 +298,11 @@
                     <ColumnDefinition Width="1"/>
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
 
-                <StackPanel Grid.Column="0" Margin="16,7">
+                <StackPanel Grid.Column="0" Margin="16,7" Background="Transparent"
+                            MouseLeftButtonDown="SalesCount_Click">
                     <TextBlock Text="{Binding SalesCount}" Style="{StaticResource FooterStatValue}"/>
                     <TextBlock Text="Scontrini" Style="{StaticResource FooterStatLabel}"/>
                 </StackPanel>
@@ -308,8 +322,11 @@
                               Style="{StaticResource FooterStatValue}"/>
                     <TextBlock Text="Ultimo ordine" Style="{StaticResource FooterStatLabel}"/>
                 </StackPanel>
-                <TextBlock Grid.Column="7" VerticalAlignment="Center" FontSize="12" HorizontalAlignment="Right" TextAlignment="Right" Margin="16,0,16,0"
+                <TextBlock Grid.Column="7" VerticalAlignment="Center" FontSize="12" HorizontalAlignment="Right" TextAlignment="Right" Margin="16,0,8,0"
                            Foreground="{StaticResource TextMutedBrush}" Text="{Binding StatusMessage}"/>
+                <Button Grid.Column="8" Content="🔍" ToolTip="Anteprima scontrino"
+                        Style="{StaticResource DeptTabButton}" Padding="10,4" Margin="0,6,12,6"
+                        Command="{Binding PreviewCurrentReceiptCommand}"/>
 
             </Grid>
         </Border>
@@ -339,6 +356,7 @@
                            Visibility="{Binding IsAdmin, Converter={StaticResource BoolToVis}}"
                            Click="OpenReports_Click"/>
                     <Button Content="⚙ Settings" Style="{StaticResource WarnButton}" Padding="10,5" Margin="0,0,8,0"
+                           Visibility="{Binding IsAdmin, Converter={StaticResource BoolToVis}}"
                            Click="OpenBackOffice_Click"/>
                     <Button Content="✕ Chiudi turno" Style="{StaticResource DangerButton}" Padding="10,5"
                            Command="{Binding CloseShiftCommand}"/>

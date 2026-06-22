@@ -18,6 +18,7 @@ public partial class ReportViewModel : BaseViewModel
     [ObservableProperty] private int _issuedReceipts;
     [ObservableProperty] private int _voidedReceipts;
     [ObservableProperty] private decimal _totalSold;
+    [ObservableProperty] private decimal _totalDiscounts;
     [ObservableProperty] private ObservableCollection<DailyProductSalesRow> _dailyProducts = [];
     [ObservableProperty] private ObservableCollection<DailyOrderRow> _dailyOrders = [];
     [ObservableProperty] private DailyOrderRow? _selectedOrder;
@@ -50,6 +51,7 @@ public partial class ReportViewModel : BaseViewModel
             IssuedReceipts = cash.IssuedReceipts;
             VoidedReceipts = cash.VoidedReceipts;
             TotalSold = cash.TotalSold;
+            TotalDiscounts = cash.TotalDiscounts;
             DailyProducts = new(cash.Products);
 
             var orders = await _report.GetDailyOrdersAsync(startOfDay, endOfDay);
@@ -75,7 +77,7 @@ public partial class ReportViewModel : BaseViewModel
             var dialog = new Microsoft.Win32.SaveFileDialog
             {
                 Filter = "Excel|*.xlsx",
-                FileName = $"incasso_{FromDate:yyyyMMdd}_a_{ToDate:yyyyMMdd}.xlsx",
+                FileName = $"venduto_{FromDate:yyyyMMdd}_a_{ToDate:yyyyMMdd}.xlsx",
                 DefaultExt = ".xlsx"
             };
             if (dialog.ShowDialog() != true)

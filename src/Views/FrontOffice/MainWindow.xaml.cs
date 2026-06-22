@@ -1,12 +1,17 @@
+using CassaEventiAI.Models;
 using CassaEventiAI.Services;
 using CassaEventiAI.ViewModels;
 using CassaEventiAI.Views.Shared;
 using CassaEventiAI.Views.BackOffice;
 using CassaEventiAI.Views.Reports;
 using Microsoft.Extensions.DependencyInjection;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.IO;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using System.Windows.Threading;
 
 namespace CassaEventiAI.Views.FrontOffice;
 
@@ -14,6 +19,8 @@ public partial class MainWindow : Window
 {
     private readonly FrontOfficeViewModel _vm;
     private readonly SaleService _sales;
+    private int _easterEggClicks;
+    private readonly DispatcherTimer _easterEggTimer;
 
     public MainWindow(FrontOfficeViewModel vm, SaleService sales)
     {
@@ -21,7 +28,11 @@ public partial class MainWindow : Window
         _vm = vm;
         _sales = sales;
         DataContext = vm;
+        _easterEggTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(2) };
+        _easterEggTimer.Tick += (_, _) => { _easterEggClicks = 0; _easterEggTimer.Stop(); };
         vm.ShiftClosed += OnShiftClosed;
+        vm.SaleCompleted += OnSaleCompleted;
+        vm.PreviewRequested += OnPreviewRequested;
 
         _ = InitShiftAsync();
     }
@@ -126,6 +137,35 @@ public partial class MainWindow : Window
         {
             e.CancelCommand();
         }
+    }
+
+    private void SalesCount_Click(object sender, MouseButtonEventArgs e)
+    {
+        _easterEggTimer.Stop();
+        _easterEggTimer.Start();
+        if (++_easterEggClicks < 10) return;
+        _easterEggClicks = 0;
+        _easterEggTimer.Stop();
+        var folder = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "CassaEventiAI");
+        if (Directory.Exists(folder))
+            Process.Start("explorer.exe", folder);
+    }
+
+    private void OnPreviewRequested(string preview)
+    {
+        var win = new ReceiptPreviewWindow(preview, "Anteprima scontrino") { Owner = this };
+        win.ShowDialog();
+    }
+
+    private void OnSaleCompleted(Sale sale, List<Department> departments)
+    {
+        Dispatcher.Invoke(() =>
+        {
+            var printing = App.Services.GetRequiredService<PrintingService>();
+            var win = new OrderSummaryWindow(sale, printing, departments) { Owner = this };
+            win.ShowDialog();
+        });
     }
 
     private void OnShiftClosed()

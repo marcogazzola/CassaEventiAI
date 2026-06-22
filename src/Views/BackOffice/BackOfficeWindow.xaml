@@ -317,11 +317,14 @@
                                 <Grid.RowDefinitions>
                                     <RowDefinition Height="40"/>
                                     <RowDefinition Height="40"/>
+                                    <RowDefinition Height="40"/>
                                 </Grid.RowDefinitions>
                                 <TextBlock Grid.Row="0" Text="Mostra totale nel footer" VerticalAlignment="Center" Foreground="{StaticResource TextSecondaryBrush}"/>
                                 <CheckBox Grid.Row="0" Grid.Column="1" VerticalAlignment="Center" IsChecked="{Binding ShowTotalInFooter}"/>
-                                <TextBlock Grid.Row="1" Text="Modalità kiosk (schermo intero)" VerticalAlignment="Center" Foreground="{StaticResource TextSecondaryBrush}"/>
-                                <CheckBox Grid.Row="1" Grid.Column="1" VerticalAlignment="Center" IsChecked="{Binding KioskMode}"/>
+                                <TextBlock Grid.Row="1" Text="Riepilogo ordine dopo incasso" VerticalAlignment="Center" Foreground="{StaticResource TextSecondaryBrush}"/>
+                                <CheckBox Grid.Row="1" Grid.Column="1" VerticalAlignment="Center" IsChecked="{Binding ShowOrderSummary}"/>
+                                <TextBlock Grid.Row="2" Text="Modalità kiosk (schermo intero)" VerticalAlignment="Center" Foreground="{StaticResource TextSecondaryBrush}"/>
+                                <CheckBox Grid.Row="2" Grid.Column="1" VerticalAlignment="Center" IsChecked="{Binding KioskMode}"/>
                             </Grid>
                         </Border>
                         <Button Content="Salva impostazioni" Style="{StaticResource PrimaryButton}" Padding="12,7"
@@ -376,6 +379,8 @@
                                           Margin="0,0,0,6" Foreground="{StaticResource TextPrimaryBrush}"/>
                                 <CheckBox Content="Stampa solo sul primo scontrino" IsChecked="{Binding ExtraFooterOnlyFirst}"
                                           Margin="0,0,0,12" Foreground="{StaticResource TextPrimaryBrush}"/>
+                                <CheckBox Content="Stampa scontrino fiscale" IsChecked="{Binding PrintFiscalReceipt}"
+                                          Margin="0,0,0,6" Foreground="{StaticResource TextPrimaryBrush}"/>
                                 <CheckBox Content="Stampa nome operatore sullo scontrino" IsChecked="{Binding PrintOperator}"
                                           Margin="0,0,0,6" Foreground="{StaticResource TextPrimaryBrush}"/>
                                 <CheckBox Content="Stampa prezzi sullo scontrino" IsChecked="{Binding PrintPrices}"
@@ -507,6 +512,30 @@
                                 <Button Content="Esporta config USB" Style="{StaticResource SuccessButton}" Padding="12,7" Margin="0,0,8,0" Command="{Binding ExportConfigToUsbCommand}"/>
                                 <Button Content="Importa config USB" Style="{StaticResource WarnButton}" Padding="12,7" Command="{Binding ImportConfigFromUsbCommand}"/>
                             </WrapPanel>
+                        </Border>
+
+                        <TextBlock Text="Backup automatico" FontSize="14" FontWeight="SemiBold"
+                                   Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,10"/>
+                        <Border Style="{StaticResource Card}" Margin="0,0,0,14">
+                            <StackPanel>
+                                <CheckBox Content="Abilita backup automatico" IsChecked="{Binding AutoBackupEnabled}" Margin="0,0,0,10"/>
+                                <Grid IsEnabled="{Binding AutoBackupEnabled}">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="80"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Text="Intervallo (minuti)" VerticalAlignment="Center"
+                                               Foreground="{StaticResource TextSecondaryBrush}" FontSize="12"/>
+                                    <TextBox Grid.Column="1" Height="30" Padding="6,0" VerticalContentAlignment="Center"
+                                             Text="{Binding AutoBackupIntervalMinutes, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource DecimalInput}}"/>
+                                    <TextBlock Grid.Column="2" Text="min" VerticalAlignment="Center"
+                                               Foreground="{StaticResource TextMutedBrush}" FontSize="12" Margin="6,0,0,0"/>
+                                </Grid>
+                                <Button Content="Salva" Style="{StaticResource PrimaryButton}" Padding="12,7"
+                                        Margin="0,12,0,0" HorizontalAlignment="Left"
+                                        Command="{Binding SaveSettingsCommand}"/>
+                            </StackPanel>
                         </Border>
 
                         <TextBlock Text="Ripristina backup" FontSize="14" FontWeight="SemiBold"
