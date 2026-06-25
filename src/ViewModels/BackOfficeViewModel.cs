@@ -3,6 +3,8 @@ using CommunityToolkit.Mvvm.Input;
 using CassaEventiAI.Models;
 using CassaEventiAI.Services;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
+using System.Reflection;
 
 namespace CassaEventiAI.ViewModels;
 
@@ -180,6 +182,85 @@ public partial class BackOfficeViewModel : BaseViewModel
             PrintDepartmentSubtotals = PrintDeptSubtotals
         });
         StatusMessage = "Configurazione scontrino salvata.";
+    }
+
+    [ObservableProperty] private ObservableCollection<ChangelogEntry> _changelog = [];
+    [ObservableProperty] private bool _isChangelogLoaded;
+    [ObservableProperty] private string _latestVersion = "unknown";
+
+    public void LoadChangelog()
+    {
+        if (IsChangelogLoaded) return; // Lazy load: carica solo una volta
+
+        try
+        {
+            // Leggi il tag più recente
+            var tagPsi = new System.Diagnostics.ProcessStartInfo
+            {
+                FileName = "git",
+                Arguments = "describe --tags --abbrev=0",
+                UseShellExecute = false,
+                RedirectStandardOutput = true,
+                CreateNoWindow = true,
+                WorkingDirectory = System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location) ?? "."
+            };
+
+            using (var tagProcess = System.Diagnostics.Process.Start(tagPsi))
+            {
+                if (tagProcess != null)
+                {
+                    using var tagReader = tagProcess.StandardOutput;
+                    var version = tagReader.ReadLine()?.Trim();
+                    if (!string.IsNullOrEmpty(version))
+                        LatestVersion = version;
+                    tagProcess.WaitForExit();
+                }
+            }
+
+            var entries = new List<ChangelogEntry>();
+            var psi = new System.Diagnostics.ProcessStartInfo
+            {
+                FileName = "git",
+                Arguments = $"log {LatestVersion} -n 30 --pretty=format:\"%h%x1e%ai%x1e%s\"",
+                UseShellExecute = false,
+                RedirectStandardOutput = true,
+                CreateNoWindow = true,
+                WorkingDirectory = System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location) ?? "."
+            };
+
+            using var process = System.Diagnostics.Process.Start(psi);
+            if (process == null) return;
+
+            using var reader = process.StandardOutput;
+            string? line;
+            while ((line = reader.ReadLine()) != null)
+            {
+                var parts = line.Split((char)0x1e);
+                if (parts.Length >= 3 && DateTime.TryParse(parts[1], out var date))
+                {
+                    entries.Add(new ChangelogEntry
+                    {
+                        Hash = parts[0],
+                        Date = date,
+                        Message = parts[2]
+                    });
+                }
+            }
+
+            process.WaitForExit();
+
+            Changelog = new(entries);
+            IsChangelogLoaded = true;
+        }
+        catch
+        {
+            // Se fallisce git, mostra un changelog placeholder
+            Changelog = new()
+            {
+                new ChangelogEntry { Hash = LatestVersion, Date = DateTime.Now, Message = $"Versione {LatestVersion} (changelog non disponibile)" }
+            };
+            IsChangelogLoaded = true;
+        }
     }
 
     // ── Printer test ──────────────────────────────────────────────────────

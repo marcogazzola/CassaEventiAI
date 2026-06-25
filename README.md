@@ -213,18 +213,19 @@ Tabelle principali:
 7. Reportistica e/o export Excel.
 8. Backup automatici o manuali.
 
-## Pacchetti NuGet (versioni correnti)
+## Dipendenze NuGet (principali)
 
-| Package | Versione |
-|---|---|
-| Microsoft.EntityFrameworkCore.Sqlite | 10.0.9 |
-| Microsoft.EntityFrameworkCore.Design | 10.0.9 |
-| CommunityToolkit.Mvvm | 8.4.2 |
-| Microsoft.Extensions.DependencyInjection | 10.0.9 |
-| Microsoft.Extensions.Logging | 10.0.9 |
-| ClosedXML | 0.105.0 |
-| BCrypt.Net-Next | 4.2.1 |
-| CsvHelper | 33.1.0 |
+Queste sono le dipendenze principali usate dal progetto al momento:
+
+| Package | Versione | Uso |
+|---|---:|---|
+| Microsoft.EntityFrameworkCore.Sqlite | 10.0.9 | Persistenza (SQLite)
+| Microsoft.EntityFrameworkCore.Design | 10.0.9 | Tooling EF Core (design-time)
+| CommunityToolkit.Mvvm | 8.4.2 | MVVM helpers (INotify, RelayCommand, ecc.)
+| Microsoft.Extensions.DependencyInjection | 10.0.9 | Dependency Injection / container
+| Microsoft.Extensions.Logging | 10.0.9 | Logging
+| ClosedXML | 0.105.0 | Export Excel (ReportService)
+| BCrypt.Net-Next | 4.2.1 | Hash password (AuthService)
 
 ## Note operative
 

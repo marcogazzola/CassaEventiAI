@@ -187,3 +187,10 @@ public record SaleLookupRow(int SaleId, DateTime CreatedAt, string OperatorName,
 public record DailyProductSalesRow(DateTime Date, string ProductName, decimal UnitPrice, int Quantity, decimal TotalAmount);
 
 public record DailyOrderRow(int SaleId, DateTime CreatedAt, string OperatorName, string PaymentMethod, decimal Total, bool IsVoided, decimal DiscountAmount);
+
+public class ChangelogEntry
+{
+    public string Hash { get; set; } = string.Empty;
+    public DateTime Date { get; set; }
+    public string Message { get; set; } = string.Empty;
+}
