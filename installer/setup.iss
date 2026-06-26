@@ -53,7 +53,7 @@ const
   DotNetDesktopRuntimeKey = 'SOFTWARE\dotnet\Setup\InstalledVersions\x64\sharedfx\Microsoft.WindowsDesktop.App\10.0';
   DotNetInstallUrl = 'https://aka.ms/dotnet/10.0/windowsdesktop-runtime-win-x64-installer';
 
-function URLDownloadToFile(dwReserved: Cardinal; szURL, szFileName: String; dwReserved2: Cardinal; lpfnCB: Pointer): HRESULT;
+function URLDownloadToFile(dwReserved: Cardinal; szURL, szFileName: String; dwReserved2: Cardinal; lpfnCB: Longint): HRESULT;
   external 'URLDownloadToFileA@urlmon.dll stdcall';
 
 function IsDotNet10Installed(): Boolean;
