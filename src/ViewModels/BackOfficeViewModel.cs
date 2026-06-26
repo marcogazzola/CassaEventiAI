@@ -15,6 +15,7 @@ public partial class BackOfficeViewModel : BaseViewModel
     private readonly BackupService _backup;
     private readonly UsbService _usb;
     private readonly PrintingService _printing;
+    private readonly UpdateService _update;
 
     public DepartmentsViewModel Departments { get; }
     public ProductsViewModel Products { get; }
@@ -22,12 +23,12 @@ public partial class BackOfficeViewModel : BaseViewModel
 
     public BackOfficeViewModel(
         EventService events, ConfigService config, BackupService backup,
-        UsbService usb, PrintingService printing,
+        UsbService usb, PrintingService printing, UpdateService update,
         DepartmentsViewModel departments, ProductsViewModel products,
         OperatorsViewModel operators)
     {
         _events = events; _config = config; _backup = backup;
-        _usb = usb; _printing = printing;
+        _usb = usb; _printing = printing; _update = update;
         Departments = departments; Products = products;
         Operators = operators;
 
@@ -188,79 +189,29 @@ public partial class BackOfficeViewModel : BaseViewModel
     [ObservableProperty] private bool _isChangelogLoaded;
     [ObservableProperty] private string _latestVersion = "unknown";
 
-    public void LoadChangelog()
+    public async Task LoadChangelogAsync()
     {
-        if (IsChangelogLoaded) return; // Lazy load: carica solo una volta
-
+        if (IsChangelogLoaded) return;
         try
         {
-            // Leggi il tag più recente
-            var tagPsi = new System.Diagnostics.ProcessStartInfo
-            {
-                FileName = "git",
-                Arguments = "describe --tags --abbrev=0",
-                UseShellExecute = false,
-                RedirectStandardOutput = true,
-                CreateNoWindow = true,
-                WorkingDirectory = System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location) ?? "."
-            };
-
-            using (var tagProcess = System.Diagnostics.Process.Start(tagPsi))
-            {
-                if (tagProcess != null)
-                {
-                    using var tagReader = tagProcess.StandardOutput;
-                    var version = tagReader.ReadLine()?.Trim();
-                    if (!string.IsNullOrEmpty(version))
-                        LatestVersion = version;
-                    tagProcess.WaitForExit();
-                }
-            }
-
-            var entries = new List<ChangelogEntry>();
-            var psi = new System.Diagnostics.ProcessStartInfo
-            {
-                FileName = "git",
-                Arguments = $"log {LatestVersion} -n 30 --pretty=format:\"%h%x1e%ai%x1e%s\"",
-                UseShellExecute = false,
-                RedirectStandardOutput = true,
-                CreateNoWindow = true,
-                WorkingDirectory = System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location) ?? "."
-            };
-
-            using var process = System.Diagnostics.Process.Start(psi);
-            if (process == null) return;
-
-            using var reader = process.StandardOutput;
-            string? line;
-            while ((line = reader.ReadLine()) != null)
-            {
-                var parts = line.Split((char)0x1e);
-                if (parts.Length >= 3 && DateTime.TryParse(parts[1], out var date))
-                {
-                    entries.Add(new ChangelogEntry
-                    {
-                        Hash = parts[0],
-                        Date = date,
-                        Message = parts[2]
-                    });
-                }
-            }
-
-            process.WaitForExit();
-
+            var (version, entries) = await _update.GetChangelogAsync();
+            LatestVersion = version;
             Changelog = new(entries);
-            IsChangelogLoaded = true;
         }
         catch
         {
-            // Se fallisce git, mostra un changelog placeholder
+            LatestVersion = UpdateService.CurrentVersionString;
             Changelog = new()
             {
-                new ChangelogEntry { Hash = LatestVersion, Date = DateTime.Now, Message = $"Versione {LatestVersion} (changelog non disponibile)" }
+                new ChangelogEntry
+                {
+                    Hash = string.Empty,
+                    Date = DateTime.Now,
+                    Message = "Il changelog sarà disponibile quando ci sarà connessione internet."
+                }
             };
-            IsChangelogLoaded = true;
         }
+        IsChangelogLoaded = true;
     }
 
     // ── Printer test ──────────────────────────────────────────────────────

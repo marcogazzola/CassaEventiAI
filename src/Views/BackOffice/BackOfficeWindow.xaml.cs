@@ -52,7 +52,7 @@ public partial class BackOfficeWindow : Window
         // Lazy-load changelog quando il tab Info è selezionato
         if (e.AddedItems.Count > 0 && e.AddedItems[0] is TabItem tabItem && tabItem.Header?.ToString() == "Info")
         {
-            _vm.LoadChangelog();
+            _ = _vm.LoadChangelogAsync();
         }
     }
 
