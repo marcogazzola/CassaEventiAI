@@ -1,6 +1,8 @@
 using CassaEventiAI.ViewModels;
 using CassaEventiAI.Models;
 using CassaEventiAI.Views.FrontOffice;
+using System;
+using System.Diagnostics;
 using System.Windows.Forms;
 using System.Windows;
 using System.Windows.Controls;
@@ -46,6 +48,12 @@ public partial class BackOfficeWindow : Window
 
         if (ProductsTab.IsSelected)
             _vm.Products.Load();
+
+        // Lazy-load changelog quando il tab Info è selezionato
+        if (e.AddedItems.Count > 0 && e.AddedItems[0] is TabItem tabItem && tabItem.Header?.ToString() == "Info")
+        {
+            _ = _vm.LoadChangelogAsync();
+        }
     }
 
     private void PickDepartmentColor_Click(object sender, RoutedEventArgs e)
@@ -123,5 +131,22 @@ public partial class BackOfficeWindow : Window
             current = VisualTreeHelper.GetParent(current);
         }
         return false;
+    }
+
+    private void Hyperlink_RequestNavigate(object sender, System.Windows.Navigation.RequestNavigateEventArgs e)
+    {
+        try
+        {
+            var psi = new ProcessStartInfo(e.Uri.AbsoluteUri)
+            {
+                UseShellExecute = true
+            };
+            Process.Start(psi);
+        }
+        catch
+        {
+            System.Windows.MessageBox.Show($"Impossibile aprire il link: {e.Uri.AbsoluteUri}", "Errore", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+        e.Handled = true;
     }
 }

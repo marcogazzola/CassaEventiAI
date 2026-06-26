@@ -1,3 +1,4 @@
+using CassaEventiAI.Models;
 using System.Diagnostics;
 using System.IO;
 using System.Net.Http;
@@ -58,6 +59,40 @@ public class UpdateService
         {
             return null;
         }
+    }
+
+    public async Task<(string Version, List<ChangelogEntry> Entries)> GetChangelogAsync()
+    {
+        var version = CurrentVersionString;
+        try
+        {
+            var releaseJson = await _http.GetStringAsync(
+                $"https://api.github.com/repos/{GitHubOwner}/{GitHubRepo}/releases/latest");
+            using var releaseDoc = JsonDocument.Parse(releaseJson);
+            version = releaseDoc.RootElement.GetProperty("tag_name").GetString() ?? version;
+        }
+        catch { }
+
+        var commitsJson = await _http.GetStringAsync(
+            $"https://api.github.com/repos/{GitHubOwner}/{GitHubRepo}/commits?per_page=50");
+        using var doc = JsonDocument.Parse(commitsJson);
+
+        var entries = new List<ChangelogEntry>();
+        foreach (var item in doc.RootElement.EnumerateArray())
+        {
+            var sha = item.GetProperty("sha").GetString() ?? "";
+            var commitObj = item.GetProperty("commit");
+            var msg = commitObj.GetProperty("message").GetString() ?? "";
+            var dateStr = commitObj.GetProperty("author").GetProperty("date").GetString() ?? "";
+            DateTime.TryParse(dateStr, out var date);
+            entries.Add(new ChangelogEntry
+            {
+                Hash = sha.Length >= 7 ? sha[..7] : sha,
+                Date = date,
+                Message = msg.Split('\n')[0].Trim()
+            });
+        }
+        return (version, entries);
     }
 
     public async Task DownloadAndInstallAsync(ReleaseInfo release, Action<int>? onProgress = null)

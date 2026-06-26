@@ -47,3 +47,54 @@ Name: "{autodesktop}\{#AppName}";        Filename: "{app}\{#AppExeName}"; Tasks:
 
 [Run]
 Filename: "{app}\{#AppExeName}"; Description: "Avvia {#AppName}"; Flags: nowait postinstall skipifsilent
+
+[Code]
+const
+  DotNetDesktopRuntimeKey = 'SOFTWARE\dotnet\Setup\InstalledVersions\x64\sharedfx\Microsoft.WindowsDesktop.App\10.0';
+  DotNetInstallUrl = 'https://aka.ms/dotnet/10.0/windowsdesktop-runtime-win-x64-installer';
+
+function URLDownloadToFile(dwReserved: Cardinal; szURL, szFileName: String; dwReserved2: Cardinal; lpfnCB: Pointer): HRESULT;
+  external 'URLDownloadToFileA@urlmon.dll stdcall';
+
+function IsDotNet10Installed(): Boolean;
+begin
+  Result := RegKeyExists(HKLM64, DotNetDesktopRuntimeKey) or RegKeyExists(HKLM32, DotNetDesktopRuntimeKey) or RegKeyExists(HKLM, DotNetDesktopRuntimeKey);
+end;
+
+function DownloadFile(const Url, Dest: string): Boolean;
+var
+  hr: HRESULT;
+begin
+  hr := URLDownloadToFile(0, Url, Dest, 0, 0);
+  Result := hr = 0;
+end;
+
+procedure InstallDotNet10();
+var
+  TempFile: string;
+  ResultCode: Integer;
+begin
+  TempFile := ExpandConstant('{tmp}\\dotnet-windowsdesktop-runtime-10.0.exe');
+  if not DownloadFile(DotNetInstallUrl, TempFile) then
+  begin
+    MsgBox('Impossibile scaricare il runtime .NET 10. Verifica la connessione internet e riprova.', mbError, MB_OK);
+    Exit;
+  end;
+  if not Exec(TempFile, '/install /quiet /norestart', '', SW_SHOW, ewWaitUntilTerminated, ResultCode) then
+  begin
+    MsgBox('Impossibile avviare l''installer di .NET 10.', mbError, MB_OK);
+    Exit;
+  end;
+  if ResultCode <> 0 then
+    MsgBox('L''installazione di .NET 10 non è riuscita. Codice di uscita: ' + IntToStr(ResultCode), mbError, MB_OK);
+end;
+
+function InitializeSetup(): Boolean;
+begin
+  Result := True;
+  if not IsDotNet10Installed() then
+  begin
+    if MsgBox('Il runtime .NET 10 non risulta installato sul sistema. Vuoi scaricarlo e installarlo automaticamente prima di procedere?', mbConfirmation, MB_YESNO) = IDYES then
+      InstallDotNet10();
+  end;
+end;

@@ -565,6 +565,63 @@
                 </ScrollViewer>
             </TabItem>
 
+            <!-- ═══ TAB: INFO ═══════════════════════════════════════════ -->
+            <TabItem Header="Info">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel Margin="10" MaxWidth="800">
+                        <TextBlock Text="Informazioni" FontSize="16" FontWeight="SemiBold" Margin="0,0,0,10" Foreground="{StaticResource TextPrimaryBrush}"/>
+
+                        <Border Style="{StaticResource Card}" Margin="0,0,0,14">
+                            <StackPanel>
+                                <TextBlock FontSize="13" FontWeight="Bold" Margin="0,0,0,6">Repository</TextBlock>
+                                <TextBlock TextWrapping="Wrap">
+                                    <Hyperlink NavigateUri="https://github.com/marcogazzola/CassaEventiAI" RequestNavigate="Hyperlink_RequestNavigate">https://github.com/marcogazzola/CassaEventiAI</Hyperlink>
+                                </TextBlock>
+                                <TextBlock FontSize="13" FontWeight="Bold" Margin="10,8,0,6">Licenza</TextBlock>
+                                <TextBlock TextWrapping="Wrap">
+                                    <Hyperlink NavigateUri="https://github.com/marcogazzola/CassaEventiAI/blob/main/LICENSE" RequestNavigate="Hyperlink_RequestNavigate">LICENSE (sviluppatore)</Hyperlink>
+                                </TextBlock>
+                                <TextBlock FontSize="13" FontWeight="Bold" Margin="10,8,0,6">Sito di supporto</TextBlock>
+                                <TextBlock TextWrapping="Wrap">
+                                    <Hyperlink NavigateUri="https://cassaeventiai.marcogazzola.com/" RequestNavigate="Hyperlink_RequestNavigate">https://cassaeventiai.marcogazzola.com/</Hyperlink>
+                                </TextBlock>
+                            </StackPanel>
+                        </Border>
+
+                        <Border Style="{StaticResource Card}" Margin="0,0,0,14">
+                            <StackPanel>
+                                <TextBlock FontSize="13" FontWeight="Bold" Margin="0,0,0,8">
+                                    <TextBlock.Text>
+                                        <MultiBinding StringFormat="Changelog - versione più recente ({0})">
+                                            <Binding Path="LatestVersion"/>
+                                        </MultiBinding>
+                                    </TextBlock.Text>
+                                </TextBlock>
+                                <ItemsControl ItemsSource="{Binding Changelog}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <TextBlock TextWrapping="Wrap" FontSize="12" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,2,0,2">
+                                                <TextBlock.Text>
+                                                    <MultiBinding StringFormat="• {0} — {1:yyyy-MM-dd} — {2}">
+                                                        <Binding Path="Hash"/>
+                                                        <Binding Path="Date"/>
+                                                        <Binding Path="Message"/>
+                                                    </MultiBinding>
+                                                </TextBlock.Text>
+                                            </TextBlock>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                                <TextBlock TextWrapping="Wrap" FontSize="12" Foreground="{StaticResource TextMutedBrush}" Margin="0,12,0,0">
+                                    Per il changelog completo vedere i tag di rilascio nel repository o la pagina delle release su GitHub.
+                                </TextBlock>
+                            </StackPanel>
+                        </Border>
+
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+
         </TabControl>
 
         <!-- Status bar -->

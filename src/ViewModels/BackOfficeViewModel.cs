@@ -3,6 +3,8 @@ using CommunityToolkit.Mvvm.Input;
 using CassaEventiAI.Models;
 using CassaEventiAI.Services;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
+using System.Reflection;
 
 namespace CassaEventiAI.ViewModels;
 
@@ -13,6 +15,7 @@ public partial class BackOfficeViewModel : BaseViewModel
     private readonly BackupService _backup;
     private readonly UsbService _usb;
     private readonly PrintingService _printing;
+    private readonly UpdateService _update;
 
     public DepartmentsViewModel Departments { get; }
     public ProductsViewModel Products { get; }
@@ -20,12 +23,12 @@ public partial class BackOfficeViewModel : BaseViewModel
 
     public BackOfficeViewModel(
         EventService events, ConfigService config, BackupService backup,
-        UsbService usb, PrintingService printing,
+        UsbService usb, PrintingService printing, UpdateService update,
         DepartmentsViewModel departments, ProductsViewModel products,
         OperatorsViewModel operators)
     {
         _events = events; _config = config; _backup = backup;
-        _usb = usb; _printing = printing;
+        _usb = usb; _printing = printing; _update = update;
         Departments = departments; Products = products;
         Operators = operators;
 
@@ -180,6 +183,35 @@ public partial class BackOfficeViewModel : BaseViewModel
             PrintDepartmentSubtotals = PrintDeptSubtotals
         });
         StatusMessage = "Configurazione scontrino salvata.";
+    }
+
+    [ObservableProperty] private ObservableCollection<ChangelogEntry> _changelog = [];
+    [ObservableProperty] private bool _isChangelogLoaded;
+    [ObservableProperty] private string _latestVersion = "unknown";
+
+    public async Task LoadChangelogAsync()
+    {
+        if (IsChangelogLoaded) return;
+        try
+        {
+            var (version, entries) = await _update.GetChangelogAsync();
+            LatestVersion = version;
+            Changelog = new(entries);
+        }
+        catch
+        {
+            LatestVersion = UpdateService.CurrentVersionString;
+            Changelog = new()
+            {
+                new ChangelogEntry
+                {
+                    Hash = string.Empty,
+                    Date = DateTime.Now,
+                    Message = "Il changelog sarà disponibile quando ci sarà connessione internet."
+                }
+            };
+        }
+        IsChangelogLoaded = true;
     }
 
     // ── Printer test ──────────────────────────────────────────────────────

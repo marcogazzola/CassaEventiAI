@@ -16,8 +16,7 @@ node_modules/
 
 publish/
 
-
-
+.claude/
 
 # Compiled Java class files
 *.class
